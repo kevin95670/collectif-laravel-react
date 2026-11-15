@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* Couleurs du design system */
+  --color-ink: #0A3A52;        /* texte principal, fonds foncés */
+  --color-brand: #0879B3;      /* boutons, liens, mot en couleur des titres */
+  --color-sky: #12A7EB;        /* décoration uniquement (logo, formes) */
+  --color-pale: #DDF1FC;       /* haut de page, pastilles */
+  --color-mist: #F1F6FB;       /* sections alternées, cartes d'info */
+  --color-butter: #F8EEAA;     /* bandeau d'annonce, badge "bientôt complet" */
+  --color-lavender: #EFE9FF;   /* pastille de confirmation */
+  --color-line: #CBD9E3;       /* bordures */
+
+  /* Polices */
+  --font-heading: "Outfit", sans-serif;
+  --font-body: "Nunito Sans", system-ui, sans-serif;
+
+  /* Ombre des cartes */
+  --shadow-card: 0 10px 30px rgba(10, 58, 82, 0.08);
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+}
