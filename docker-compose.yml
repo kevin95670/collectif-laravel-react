@@ -28,6 +28,7 @@ services:
     environment: &laravel-env
       APP_URL: http://localhost:8000          # adresse de l'API
       FRONTEND_URL: http://localhost:5173     # adresse du front React
+      APP_TIMEZONE: Europe/Paris
 
       # Base de données : "mysql" est le NOM du service plus bas.
       # (À l'intérieur d'un conteneur, "localhost" ne marcherait pas.)

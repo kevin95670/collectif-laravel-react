@@ -1,31 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  /* Couleurs du design system */
-  --color-ink: #0A3A52;        /* texte principal, fonds foncés */
-  --color-brand: #0879B3;      /* boutons, liens, mot en couleur des titres */
-  --color-sky: #12A7EB;        /* décoration uniquement (logo, formes) */
-  --color-pale: #DDF1FC;       /* haut de page, pastilles */
-  --color-mist: #F1F6FB;       /* sections alternées, cartes d'info */
-  --color-butter: #F8EEAA;     /* bandeau d'annonce, badge "bientôt complet" */
-  --color-lavender: #EFE9FF;   /* pastille de confirmation */
-  --color-line: #CBD9E3;       /* bordures */
+  /* Couleurs de la V3 */
+  --color-marine: #0B2A5B;   /* titres, fonds foncés, pied de page */
+  --color-brand: #0B57A8;    /* boutons, liens, sous-titres */
+  --color-ciel: #CFE3FB;     /* sections et cadres bleu clair */
+  --color-creme: #F5F0E6;    /* sections crème */
+  --color-gris: #5B6472;     /* texte courant */
+  --color-line: #D8DEE8;     /* fines bordures */
 
   /* Polices */
-  --font-heading: "Outfit", sans-serif;
-  --font-body: "Nunito Sans", system-ui, sans-serif;
+  --font-titre: "Cormorant Unicase", serif;
+  --font-texte: "Montserrat", system-ui, sans-serif;
 
-  /* Ombre des cartes */
-  --shadow-card: 0 10px 30px rgba(10, 58, 82, 0.08);
+  /* Ombre des boutons */
+  --shadow-carte: 0 6px 14px rgba(11, 42, 91, 0.22);
 }
 
 body {
   margin: 0;
   background: #ffffff;
-  color: var(--color-ink);
-  font-family: var(--font-body);
+  color: var(--color-gris);
+  font-family: var(--font-texte);
 }
 
+/* Tous les titres : Cormorant Unicase, en marine. */
 h1, h2, h3 {
-  font-family: var(--font-heading);
+  font-family: var(--font-titre);
+  font-weight: 500;
+  color: var(--color-marine);
+}
+
+/* Nos propres classes réutilisables, construites avec les classes Tailwind (@apply). */
+@layer components {
+  /* Le bouton rectangulaire en majuscules de la V3 */
+  .bouton {
+    @apply inline-block bg-brand px-8 py-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-carte transition duration-200 hover:-translate-y-0.5 hover:bg-marine;
+  }
+  /* Le petit sous-titre entre tirets : "- à propos -" */
+  .sous-titre {
+    @apply text-xs font-bold tracking-wide text-brand;
+  }
+  /* Les lignes en majuscules espacées */
+  .texte-maj {
+    @apply text-xs font-semibold uppercase leading-7 tracking-[0.09em];
+  }
+  /* Le numéro de section : "01", "02" */
+  .numero {
+    @apply font-titre text-4xl leading-none text-brand;
+  }
 }
