@@ -1,0 +1,138 @@
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useUtilisateur } from "../contexts/ContexteUtilisateur";
+import { recupererEvenement, rejoindreEvenement, quitterEvenement } from "../api/evenements";
+import { LISTE_DES_SPORTS } from "../constantes/sports";
+import { formaterDate } from "../utilitaires/dates";
+
+export default function PageDetailEvenement() {
+  // useParams lit les parties variables de l'URL : pour "/evenements/3", id vaut "3"
+  // (équivalent de useRoute().params.id en Vue Router). C'est toujours du texte.
+  const { id } = useParams();
+  const { utilisateur } = useUtilisateur();
+
+  const [evenement, setEvenement] = useState(null);   // null = pas encore reçu
+  const [chargement, setChargement] = useState(true);
+  const [erreur, setErreur] = useState("");
+
+  const [actionEnCours, setActionEnCours] = useState(false);
+  const [messageAction, setMessageAction] = useState("");   // erreur du bouton (ex : "complet")
+
+  // Dépendance [id] : si on passe d'un événement à un autre, on recharge.
+  useEffect(() => {
+    setChargement(true);
+    setErreur("");
+
+    recupererEvenement(id)
+      .then(setEvenement)   // raccourci de .then((donnees) => setEvenement(donnees))
+      .catch((erreurCapturee) => {
+        setErreur(erreurCapturee.statut === 404 ? "Cet événement n'existe pas." : "Impossible de charger l'événement.");
+      })
+      .finally(() => setChargement(false));
+  }, [id]);
+
+  // Un seul bouton : il rejoint si on n'est pas inscrit, il quitte sinon.
+  async function changerInscription() {
+    setActionEnCours(true);
+    setMessageAction("");
+
+    try {
+      // Laravel renvoie l'événement à jour (places restantes, participants) : on le range tel quel
+      const evenementMisAJour = evenement.utilisateur_est_inscrit
+        ? await quitterEvenement(id)
+        : await rejoindreEvenement(id);
+      setEvenement(evenementMisAJour);
+    } catch (erreurCapturee) {
+      setMessageAction(erreurCapturee.message);   // ex : "Cet événement est complet."
+    } finally {
+      setActionEnCours(false);
+    }
+  }
+
+  if (chargement) return <p className="p-10 text-center">Chargement...</p>;
+  if (erreur) return <p className="p-10 text-center font-bold">{erreur}</p>;
+
+  // Convertit le code ("padel") en texte lisible ("Padel")
+  const libelleSport = LISTE_DES_SPORTS.find((sport) => sport.valeur === evenement.sport)?.libelle;
+  const estOrganisateur = utilisateur && utilisateur.id === evenement.organisateur_id;
+  const estComplet = evenement.nombre_places_restantes === 0;
+
+  // Quel bouton afficher ? On décide ici, pour garder le JSX lisible.
+  function afficherBoutonInscription() {
+    if (evenement.est_annule) {
+      return <p className="font-bold">Cet événement est annulé.</p>;
+    }
+    if (estOrganisateur) {
+      return <p className="font-bold">Tu organises cet événement.</p>;
+    }
+    if (!utilisateur) {
+      return <Link to="/connexion" className="bouton text-center">Se connecter pour rejoindre</Link>;
+    }
+    if (evenement.utilisateur_est_inscrit) {
+      return (
+        <button type="button" onClick={changerInscription} disabled={actionEnCours}
+          className="bouton text-center disabled:opacity-50">
+          {actionEnCours ? "..." : "Quitter l'événement"}
+        </button>
+      );
+    }
+    if (estComplet) {
+      return <p className="font-bold">Complet</p>;
+    }
+    return (
+      <button type="button" onClick={changerInscription} disabled={actionEnCours}
+        className="bouton text-center disabled:opacity-50">
+        {actionEnCours ? "..." : "Rejoindre l'événement"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl px-6 py-16 md:px-10">
+      <div className="text-center">
+        <div className="sous-titre">- {libelleSport} -</div>
+        <h1 className="mt-4 text-5xl">{evenement.titre}</h1>
+        <p className="mt-3 text-sm text-gris">Organisé par {evenement.organisateur.name}</p>
+      </div>
+
+      <div className="mt-10 grid gap-8 md:grid-cols-3">
+        {/* Colonne de gauche : les informations */}
+        <div className="border border-line bg-white p-8 md:col-span-2">
+          <h2 className="text-2xl">Informations</h2>
+          <p className="mt-4"><span className="font-bold text-marine">Début :</span> {formaterDate(evenement.date_debut)}</p>
+          <p className="mt-1"><span className="font-bold text-marine">Fin :</span> {formaterDate(evenement.date_fin)}</p>
+          <p className="mt-1"><span className="font-bold text-marine">Lieu :</span> {evenement.adresse}, {evenement.ville}</p>
+
+          {/* whitespace-pre-line : respecte les retours à la ligne de la description */}
+          {evenement.description && (
+            <p className="mt-6 whitespace-pre-line">{evenement.description}</p>
+          )}
+        </div>
+
+        {/* Colonne de droite : places, bouton et participants */}
+        <div className="border border-line bg-white p-8">
+          <p className="font-titre text-4xl text-marine">
+            {evenement.nombre_de_participants} / {evenement.nombre_places_max}
+          </p>
+          <p className="text-sm text-gris">
+            {estComplet ? "Complet" : evenement.nombre_places_restantes + " place(s) restante(s)"}
+          </p>
+
+          <div className="mt-6 flex flex-col">{afficherBoutonInscription()}</div>
+          {messageAction && <p className="mt-3 text-sm font-bold text-brand">{messageAction}</p>}
+
+          <h3 className="mt-8 text-xl">Participants</h3>
+          {evenement.participants.length === 0 ? (
+            <p className="mt-2 text-sm text-gris">Personne pour l'instant. Sois le premier !</p>
+          ) : (
+            <ul className="mt-2 text-sm">
+              {evenement.participants.map((participant) => (
+                <li key={participant.id} className="border-b border-line py-2">{participant.name}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

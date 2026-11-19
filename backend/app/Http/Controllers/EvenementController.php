@@ -13,17 +13,37 @@ class EvenementController extends Controller
     // Renvoie la liste des événements à venir.
     // "index" est le nom d'usage de Laravel pour une action "lister" : ce n'est pas obligatoire,
     // mais tout le monde l'utilise, donc on le garde.
-    public function index()
+    // GET /api/evenements?sport=football&ville=Lyon&date=2026-12-05
+    // Tous les filtres sont facultatifs : sans paramètre, on renvoie tout.
+    public function index(Request $requete): JsonResponse
     {
-        $liste_evenements = Evenement::query()
-            ->with('organisateur:id,name')       // charge l'organisateur, mais seulement id et name
-            ->where('est_annule', false)         // on ne montre pas les événements annulés
-            ->where('date_debut', '>=', now())   // ni les événements déjà passés
-            ->orderBy('date_debut')              // du plus proche au plus lointain
-            ->get();                             // exécute la requête, renvoie une collection
+        $requete_evenements = Evenement::query()
+            ->with('organisateur:id,name')
+            ->where('est_annule', false)
+            ->where('date_debut', '>=', now())
+            ->orderBy('date_debut');
 
-        // Laravel convertit la collection de modèles en JSON.
-        return $liste_evenements;
+        // when(valeur, fonction) : la fonction ne s'exécute que si la valeur n'est pas vide.
+        // Ça évite une cascade de "if" pour chaque filtre.
+        // $requete->query('sport') lit le paramètre ?sport=... de l'URL.
+        $requete_evenements->when(
+            $requete->query('sport'),
+            fn ($requete_sql, $sport) => $requete_sql->where('sport', $sport)
+        );
+
+        // like '%lyon%' : la ville contient le texte saisi (insensible à la casse avec MySQL)
+        $requete_evenements->when(
+            $requete->query('ville'),
+            fn ($requete_sql, $ville) => $requete_sql->where('ville', 'like', '%' . $ville . '%')
+        );
+
+        // whereDate : compare uniquement le jour, sans l'heure
+        $requete_evenements->when(
+            $requete->query('date'),
+            fn ($requete_sql, $date) => $requete_sql->whereDate('date_debut', $date)
+        );
+
+        return response()->json($requete_evenements->get());
     }
 
     public function creer(CreerEvenementRequete $requete): JsonResponse

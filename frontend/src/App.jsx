@@ -6,6 +6,7 @@ import PageConnexion from "./pages/PageConnexion";
 import PageInscription from "./pages/PageInscription";
 import RouteProtegee from "./components/RouteProtegee";
 import PageCreationEvenement from "./pages/PageCreationEvenement";
+import PageRechercheEvenements from "./pages/PageRechercheEvenements";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/" element={<PageAccueil />} />
           <Route path="/connexion" element={<PageConnexion />} />
           <Route path="/inscription" element={<PageInscription />} />
+          <Route path="/evenements" element={<PageRechercheEvenements />} />
           <Route
             path="/evenements/creer"
             element={

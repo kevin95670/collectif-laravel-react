@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Evenement;
+use Illuminate\Validation\Rule;
 
 // Une "Form Request" regroupe les règles de validation d'une action.
 // Laravel l'exécute AVANT d'entrer dans la méthode du contrôleur :
@@ -26,6 +28,8 @@ class CreerEvenementRequete extends FormRequest
             // after:date_debut : la fin doit être postérieure au champ date_debut
             'date_fin' => 'required|date|after:date_debut',
             'nombre_places_max' => 'required|integer|min:2|max:500',
+            'sport' => ['required', Rule::in(Evenement::LISTE_DES_SPORTS)],
+            'ville' => 'required|string|max:100',
         ];
     }
 }
