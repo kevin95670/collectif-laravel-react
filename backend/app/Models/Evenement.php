@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\User;
 
 class Evenement extends Model
@@ -35,5 +36,14 @@ class Evenement extends Model
     public function organisateur(): BelongsTo
     {
         return $this->belongsTo(User::class, 'organisateur_id');
+    }
+
+    // Relation plusieurs-à-plusieurs : un événement a plusieurs participants (User),
+    // un User participe à plusieurs événements. Les liens sont dans la table "inscriptions".
+    // Arguments : modèle lié, nom de la table, clé de CE modèle, clé de l'AUTRE modèle.
+    public function participants(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'inscriptions', 'evenement_id', 'user_id')
+            ->withTimestamps();   // remplit created_at/updated_at de la table de liaison
     }
 }

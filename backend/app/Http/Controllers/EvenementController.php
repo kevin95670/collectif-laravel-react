@@ -7,6 +7,10 @@ use App\Models\Evenement;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\CreerEvenementRequete;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use App\Http\Requests\ModifierEvenementRequete;
+use Illuminate\Support\Facades\Gate;
 
 class EvenementController extends Controller
 {
@@ -56,5 +60,140 @@ class EvenementController extends Controller
         $evenement = Evenement::create($donnees_validees);
 
         return response()->json($evenement, 201);
+    }
+    
+    // GET /api/evenements/{evenement}
+    // "Evenement $evenement" : Laravel lit l'id dans l'URL, va chercher l'événement
+    // et renvoie une erreur 404 s'il n'existe pas ("route model binding", comme MapEntity en Symfony).
+    // Le nom de la variable doit être le même que {evenement} dans la route.
+    public function afficher(Request $requete, Evenement $evenement): JsonResponse
+    {
+        // Route publique : on ne passe pas par auth:sanctum, donc on demande
+        // explicitement la personne connectée (ou null si personne).
+        $utilisateur_connecte = $requete->user('sanctum');
+
+        return response()->json($this->construire_detail_evenement($evenement, $utilisateur_connecte));
+    }
+
+    // POST /api/evenements/{evenement}/inscription
+    public function rejoindre(Request $requete, Evenement $evenement): JsonResponse
+    {
+        $utilisateur = $requete->user();
+
+        // La transaction regroupe les vérifications ET l'inscription : tout ou rien.
+        // La fonction renvoie un message d'erreur, ou null si l'inscription a réussi.
+        $message_erreur = DB::transaction(function () use ($evenement, $utilisateur) {
+
+            // lockForUpdate() verrouille la ligne de l'événement jusqu'à la fin de la transaction.
+            // Si deux personnes cliquent en même temps sur la dernière place, la seconde attend
+            // que la première ait fini, puis voit que l'événement est complet.
+            // (Équivalent du verrou pessimiste PESSIMISTIC_WRITE de Doctrine.)
+            $evenement_verrouille = Evenement::query()->lockForUpdate()->findOrFail($evenement->id);
+
+            if ($evenement_verrouille->est_annule) {
+                return 'Cet événement est annulé.';
+            }
+
+            if ($evenement_verrouille->date_debut->isPast()) {
+                return 'Cet événement a déjà commencé.';
+            }
+
+            $est_deja_inscrit = $evenement_verrouille->participants()
+                ->where('users.id', $utilisateur->id)
+                ->exists();
+            if ($est_deja_inscrit) {
+                return 'Tu es déjà inscrit à cet événement.';
+            }
+
+            if ($evenement_verrouille->participants()->count() >= $evenement_verrouille->nombre_places_max) {
+                return 'Cet événement est complet.';
+            }
+
+            // attach() ajoute une ligne dans la table "inscriptions"
+            $evenement_verrouille->participants()->attach($utilisateur->id);
+
+            return null;
+        });
+
+        if ($message_erreur !== null) {
+            return response()->json(['message' => $message_erreur], 422);
+        }
+
+        // On renvoie l'événement à jour, pour que React n'ait pas à le redemander
+        return response()->json($this->construire_detail_evenement($evenement, $utilisateur), 201);
+    }
+
+    // DELETE /api/evenements/{evenement}/inscription
+    public function quitter(Request $requete, Evenement $evenement): JsonResponse
+    {
+        $utilisateur = $requete->user();
+
+        // detach() supprime la ligne de la table "inscriptions" (sans erreur si elle n'existe pas)
+        $evenement->participants()->detach($utilisateur->id);
+
+        return response()->json($this->construire_detail_evenement($evenement, $utilisateur));
+    }
+
+    // Prépare la réponse détaillée d'un événement : ses données + organisateur,
+    // participants, places restantes, et si la personne connectée est inscrite.
+    private function construire_detail_evenement(Evenement $evenement, ?User $utilisateur): array
+    {
+        // fresh() recharge l'événement depuis la base ; load() charge les relations
+        $evenement = $evenement->fresh();
+        $evenement->load(['organisateur:id,name', 'participants:id,name']);
+
+        $nombre_de_participants = $evenement->participants->count();
+
+        return [
+            ...$evenement->toArray(),   // "..." recopie toutes les clés du tableau de l'événement
+            'nombre_de_participants' => $nombre_de_participants,
+            'nombre_places_restantes' => max(0, $evenement->nombre_places_max - $nombre_de_participants),
+            'utilisateur_est_inscrit' => $utilisateur !== null
+                && $evenement->participants->contains('id', $utilisateur->id),
+        ];
+    }
+
+    // GET /api/mes-evenements : les événements organisés et ceux où la personne est inscrite
+    public function mes_evenements(Request $requete): JsonResponse
+    {
+        $utilisateur = $requete->user();
+
+        // On passe par la relation : Laravel ajoute tout seul "where organisateur_id = ..."
+        $evenements_organises = $utilisateur->evenements_organises()
+            ->withCount('participants')   // ajoute la colonne participants_count
+            ->orderBy('date_debut')
+            ->get();
+
+        $evenements_inscrits = $utilisateur->evenements_inscrits()
+            ->with('organisateur:id,name')
+            ->withCount('participants')
+            ->orderBy('date_debut')
+            ->get();
+
+        return response()->json([
+            'organises' => $evenements_organises,
+            'inscrits' => $evenements_inscrits,
+        ]);
+    }
+
+    // PUT /api/evenements/{evenement}
+    // La Form Request vérifie le droit (Policy) ET les règles de validation avant d'arriver ici.
+    public function modifier(ModifierEvenementRequete $requete, Evenement $evenement): JsonResponse
+    {
+        // update() modifie uniquement les colonnes du $fillable
+        $evenement->update($requete->validated());
+
+        return response()->json($this->construire_detail_evenement($evenement, $requete->user()));
+    }
+
+    // POST /api/evenements/{evenement}/annulation
+    public function annuler(Request $requete, Evenement $evenement): JsonResponse
+    {
+        // Gate::authorize appelle EvenementPolicy::annuler ; refus = réponse 403 automatique
+        Gate::authorize('annuler', $evenement);
+
+        $evenement->update(['est_annule' => true]);
+
+        return response()->json($this->construire_detail_evenement($evenement, $requete->user()));
     }
 }

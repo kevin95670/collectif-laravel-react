@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import CarteEvenement from "../components/CarteEvenement";
 import { recupererEvenements } from "../api/evenements";
+import { Link } from "react-router-dom";
 
 export default function PageAccueil() {
   const [evenements, setEvenements] = useState([]);
@@ -36,13 +37,15 @@ export default function PageAccueil() {
 
       <div className="mt-12 grid gap-8 md:grid-cols-3">
         {evenements.map((evenement) => (
-          <CarteEvenement
-            key={evenement.id}
-            titre={evenement.titre}
-            adresse={evenement.adresse}
-            dateDebut={formaterDate(evenement.date_debut)}
-            nombrePlacesMax={evenement.nombre_places_max}
-          />
+          // key se met sur l'élément le plus extérieur du .map : ici, le Link
+          <Link key={evenement.id} to={"/evenements/" + evenement.id}>
+            <CarteEvenement
+              titre={evenement.titre}
+              adresse={`${evenement.adresse}, ${evenement.ville}`}
+              dateDebut={formaterDate(evenement.date_debut)}
+              nombrePlacesMax={evenement.nombre_places_max}
+            />
+          </Link>
         ))}
       </div>
     </div>

@@ -7,6 +7,9 @@ import PageInscription from "./pages/PageInscription";
 import RouteProtegee from "./components/RouteProtegee";
 import PageCreationEvenement from "./pages/PageCreationEvenement";
 import PageRechercheEvenements from "./pages/PageRechercheEvenements";
+import PageDetailEvenement from "./pages/PageDetailEvenement";
+import PageMesEvenements from "./pages/PageMesEvenements";
+import PageModificationEvenement from "./pages/PageModificationEvenement";
 
 export default function App() {
   return (
@@ -29,6 +32,20 @@ export default function App() {
               </RouteProtegee>
             }
           />
+          <Route path="/evenements/:id" element={<PageDetailEvenement />} />
+          <Route path="/mes-evenements" element={
+            <RouteProtegee>
+              <PageMesEvenements />
+            </RouteProtegee>
+          } />
+          <Route
+            path="/evenements/:id/modifier"
+            element={
+              <RouteProtegee>
+                <PageModificationEvenement />
+              </RouteProtegee>
+            }
+          />  
         </Routes>
       </main>
 

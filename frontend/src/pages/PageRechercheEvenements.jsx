@@ -5,6 +5,7 @@ import ChampSelection from "../components/ChampSelection";
 import { recupererEvenements } from "../api/evenements";
 import { LISTE_DES_SPORTS } from "../constantes/sports";
 import { formaterDate } from "../utilitaires/dates";
+import { Link } from "react-router-dom";
 
 // Même liste que pour la création, avec une première option "vide" pour ne pas filtrer
 const OPTIONS_SPORTS_FILTRE = [{ valeur: "", libelle: "Tous les sports" }, ...LISTE_DES_SPORTS];
@@ -88,13 +89,15 @@ export default function PageRechercheEvenements() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {evenements.map((evenement) => (
-            <CarteEvenement
-              key={evenement.id}
-              titre={evenement.titre}
-              adresse={`${evenement.adresse}, ${evenement.ville}`}
-              dateDebut={formaterDate(evenement.date_debut)}
-              nombrePlacesMax={evenement.nombre_places_max}
-            />
+            // key se met sur l'élément le plus extérieur du .map : ici, le Link
+            <Link key={evenement.id} to={"/evenements/" + evenement.id}>
+              <CarteEvenement
+                titre={evenement.titre}
+                adresse={`${evenement.adresse}, ${evenement.ville}`}
+                dateDebut={formaterDate(evenement.date_debut)}
+                nombrePlacesMax={evenement.nombre_places_max}
+              />
+            </Link>
           ))}
         </div>
       </div>

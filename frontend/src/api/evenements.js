@@ -23,6 +23,11 @@ export function creerEvenement(donnees) {
   return appelerApi("/api/evenements", { method: "POST", donnees });
 }
 
+// GET /api/mes-evenements -> { organises: [...], inscrits: [...] }
+export function recupererMesEvenements() {
+  return appelerApi("/api/mes-evenements");
+}
+
 // GET /api/evenements/{id} -> EvenementController@afficher
 export function recupererEvenement(identifiant) {
   return appelerApi("/api/evenements/" + identifiant);
@@ -36,4 +41,14 @@ export function rejoindreEvenement(identifiant) {
 // DELETE /api/evenements/{id}/inscription -> EvenementController@quitter
 export function quitterEvenement(identifiant) {
   return appelerApi("/api/evenements/" + identifiant + "/inscription", { method: "DELETE" });
+}
+
+// PUT /api/evenements/{id} -> EvenementController@modifier
+export function modifierEvenement(identifiant, donnees) {
+  return appelerApi("/api/evenements/" + identifiant, { method: "PUT", donnees });
+}
+
+// POST /api/evenements/{id}/annulation -> EvenementController@annuler
+export function annulerEvenement(identifiant) {
+  return appelerApi("/api/evenements/" + identifiant + "/annulation", { method: "POST" });
 }

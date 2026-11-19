@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useUtilisateur } from "../contexts/ContexteUtilisateur";
-import { recupererEvenement, rejoindreEvenement, quitterEvenement } from "../api/evenements";
+import { recupererEvenement, rejoindreEvenement, quitterEvenement, annulerEvenement } from "../api/evenements";
 import { LISTE_DES_SPORTS } from "../constantes/sports";
 import { formaterDate } from "../utilitaires/dates";
 
@@ -49,6 +49,21 @@ export default function PageDetailEvenement() {
     }
   }
 
+    // L'organisateur annule l'événement : on demande confirmation, puis on range la réponse à jour
+  async function annulerCetEvenement() {
+    if (!window.confirm("Annuler cet événement ? Cette action est définitive.")) return;
+
+    setActionEnCours(true);
+    setMessageAction("");
+    try {
+      setEvenement(await annulerEvenement(id));
+    } catch (erreurCapturee) {
+      setMessageAction(erreurCapturee.message);
+    } finally {
+      setActionEnCours(false);
+    }
+  }
+
   if (chargement) return <p className="p-10 text-center">Chargement...</p>;
   if (erreur) return <p className="p-10 text-center font-bold">{erreur}</p>;
 
@@ -63,7 +78,16 @@ export default function PageDetailEvenement() {
       return <p className="font-bold">Cet événement est annulé.</p>;
     }
     if (estOrganisateur) {
-      return <p className="font-bold">Tu organises cet événement.</p>;
+      return (
+        <>
+          <p className="font-bold">Tu organises cet événement.</p>
+          <Link to={"/evenements/" + id + "/modifier"} className="bouton mt-4 text-center">Modifier</Link>
+          <button type="button" onClick={annulerCetEvenement} disabled={actionEnCours}
+            className="mt-3 border border-marine px-6 py-3 text-sm font-bold uppercase tracking-wider text-marine hover:bg-ciel disabled:opacity-50">
+            Annuler l'événement
+          </button>
+        </>
+      );
     }
     if (!utilisateur) {
       return <Link to="/connexion" className="bouton text-center">Se connecter pour rejoindre</Link>;
