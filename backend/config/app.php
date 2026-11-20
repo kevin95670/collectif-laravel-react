@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    // Adresse du site React, utilisée dans les liens des e-mails
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
 ];

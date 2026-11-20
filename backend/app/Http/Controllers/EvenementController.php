@@ -11,6 +11,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\ModifierEvenementRequete;
 use Illuminate\Support\Facades\Gate;
+use App\Notifications\EvenementAnnule;
+use App\Notifications\EvenementModifie;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Notification;
 
 class EvenementController extends Controller
 {
@@ -177,11 +181,25 @@ class EvenementController extends Controller
     }
 
     // PUT /api/evenements/{evenement}
-    // La Form Request vérifie le droit (Policy) ET les règles de validation avant d'arriver ici.
     public function modifier(ModifierEvenementRequete $requete, Evenement $evenement): JsonResponse
     {
-        // update() modifie uniquement les colonnes du $fillable
         $evenement->update($requete->validated());
+
+        // Seules ces modifications méritent d'avertir les participants
+        // (changer la description ou le nombre de places ne déclenche pas d'e-mail).
+        $champs_a_signaler = ['titre', 'adresse', 'ville', 'date_debut', 'date_fin'];
+
+        // getChanges() : ce que update() vient réellement de modifier (rien si la valeur est identique).
+        // array_intersect garde seulement les champs de notre liste.
+        $champs_modifies = array_intersect(array_keys($evenement->getChanges()), $champs_a_signaler);
+
+        if (count($champs_modifies) > 0) {
+            // Notification::send envoie à chaque personne de la liste ; chaque envoi part dans la file d'attente
+            Notification::send(
+                $this->recuperer_participants_a_prevenir($evenement),
+                new EvenementModifie($evenement, $champs_modifies)
+            );
+        }
 
         return response()->json($this->construire_detail_evenement($evenement, $requete->user()));
     }
@@ -189,11 +207,23 @@ class EvenementController extends Controller
     // POST /api/evenements/{evenement}/annulation
     public function annuler(Request $requete, Evenement $evenement): JsonResponse
     {
-        // Gate::authorize appelle EvenementPolicy::annuler ; refus = réponse 403 automatique
         Gate::authorize('annuler', $evenement);
 
         $evenement->update(['est_annule' => true]);
 
+        Notification::send(
+            $this->recuperer_participants_a_prevenir($evenement),
+            new EvenementAnnule($evenement)
+        );
+
         return response()->json($this->construire_detail_evenement($evenement, $requete->user()));
+    }
+
+    // Les inscrits, sauf l'organisateur : inutile de le prévenir de ses propres actions
+    private function recuperer_participants_a_prevenir(Evenement $evenement): Collection
+    {
+        return $evenement->participants()
+            ->where('users.id', '!=', $evenement->organisateur_id)
+            ->get();
     }
 }
