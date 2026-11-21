@@ -9,3 +9,8 @@ export const LISTE_DES_SPORTS = [
   { valeur: "velo", libelle: "Vélo" },
   { valeur: "autre", libelle: "Autre" },
 ];
+
+// "padel" -> "Padel" (undefined si le code est inconnu)
+export function libelleDuSport(valeur) {
+  return LISTE_DES_SPORTS.find((sport) => sport.valeur === valeur)?.libelle;
+}

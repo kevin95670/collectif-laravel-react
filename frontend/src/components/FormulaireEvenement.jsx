@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ChampFormulaire from "./ChampFormulaire";
 import ChampSelection from "./ChampSelection";
+import PhotoEvenement from "./PhotoEvenement";
 import { LISTE_DES_SPORTS } from "../constantes/sports";
 
 // Props :
-// - valeursInitiales : les valeurs de départ des champs (vides pour une création, remplies pour une modification)
-// - libelleBouton / libelleEnCours : les textes du bouton
-// - auEnvoi : fonction fournie par le parent, appelée avec les données ; elle peut échouer (throw)
-export default function FormulaireEvenement({ valeursInitiales, libelleBouton, libelleEnCours, auEnvoi }) {
-  // useState ne lit sa valeur de départ qu'au PREMIER affichage du composant.
+// - valeursInitiales : valeurs de départ des champs
+// - photoActuelleUrl : photo déjà enregistrée (modification), sinon rien
+// - auEnvoi(donnees, optionsPhoto) : fournie par le parent ; optionsPhoto = { photo, supprimerPhoto }
+export default function FormulaireEvenement({ valeursInitiales, photoActuelleUrl = null, libelleBouton, libelleEnCours, auEnvoi }) {
   const [titre, setTitre] = useState(valeursInitiales.titre);
   const [sport, setSport] = useState(valeursInitiales.sport);
   const [description, setDescription] = useState(valeursInitiales.description);
@@ -18,8 +18,29 @@ export default function FormulaireEvenement({ valeursInitiales, libelleBouton, l
   const [dateFin, setDateFin] = useState(valeursInitiales.dateFin);
   const [nombrePlacesMax, setNombrePlacesMax] = useState(valeursInitiales.nombrePlacesMax);
 
+  const [photo, setPhoto] = useState(null);                      // le fichier choisi (objet File) ou null
+  const [apercuPhoto, setApercuPhoto] = useState(null);          // adresse temporaire pour l'aperçu
+  const [supprimerPhoto, setSupprimerPhoto] = useState(false);   // case "supprimer la photo actuelle"
+
   const [erreurs, setErreurs] = useState({});
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
+
+  // À chaque nouveau fichier choisi, on fabrique une adresse temporaire pour l'afficher avant l'envoi.
+  useEffect(() => {
+    if (!photo) {
+      setApercuPhoto(null);
+      return;
+    }
+    // createObjectURL : une adresse "blob:..." qui pointe vers le fichier en mémoire du navigateur
+    const adresseTemporaire = URL.createObjectURL(photo);
+    setApercuPhoto(adresseTemporaire);
+
+    // Nettoyage : on libère la mémoire quand le fichier change ou quand le composant disparaît
+    return () => URL.revokeObjectURL(adresseTemporaire);
+  }, [photo]);
+
+  // Que montrer ? Le nouvel aperçu d'abord, sinon la photo actuelle (sauf si on veut la supprimer)
+  const urlAffichee = apercuPhoto ?? (supprimerPhoto ? null : photoActuelleUrl);
 
   async function soumettreFormulaire(evenementFormulaire) {
     evenementFormulaire.preventDefault();
@@ -27,17 +48,19 @@ export default function FormulaireEvenement({ valeursInitiales, libelleBouton, l
     setEnvoiEnCours(true);
 
     try {
-      // On passe les données (clés attendues par Laravel) au parent : lui sait quoi en faire
-      await auEnvoi({
-        titre: titre,
-        sport: sport,
-        description: description,
-        adresse: adresse,
-        ville: ville,
-        date_debut: dateDebut,
-        date_fin: dateFin,
-        nombre_places_max: Number(nombrePlacesMax),
-      });
+      await auEnvoi(
+        {
+          titre: titre,
+          sport: sport,
+          description: description,
+          adresse: adresse,
+          ville: ville,
+          date_debut: dateDebut,
+          date_fin: dateFin,
+          nombre_places_max: Number(nombrePlacesMax),
+        },
+        { photo: photo, supprimerPhoto: supprimerPhoto }
+      );
     } catch (erreurCapturee) {
       const aDesErreursParChamp = Object.keys(erreurCapturee.erreurs ?? {}).length > 0;
       setErreurs(aDesErreursParChamp ? erreurCapturee.erreurs : { general: [erreurCapturee.message] });
@@ -63,6 +86,30 @@ export default function FormulaireEvenement({ valeursInitiales, libelleBouton, l
         valeur={dateFin} auChangement={setDateFin} erreurs={erreurs.date_fin} />
       <ChampFormulaire id="nombre-places" libelle="Nombre de places maximum" type="number"
         valeur={nombrePlacesMax} auChangement={setNombrePlacesMax} erreurs={erreurs.nombre_places_max} />
+
+      {/* Photo : aperçu, choix du fichier, et suppression de la photo actuelle */}
+      <div className="mt-5">
+        <label className="block text-sm font-bold text-marine" htmlFor="photo">Photo (facultatif)</label>
+        <PhotoEvenement url={urlAffichee} alt="Aperçu" className="mt-2 h-48 w-full" />
+
+        {/* Un champ fichier n'est jamais "contrôlé" par value : on lit le fichier choisi dans l'événement */}
+        <input
+          id="photo"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(evenement) => setPhoto(evenement.target.files[0] ?? null)}
+          className="mt-3 block w-full text-sm text-gris file:mr-4 file:cursor-pointer file:border file:border-marine file:bg-white file:px-5 file:py-3 file:text-xs file:font-bold file:uppercase file:tracking-wider file:text-marine hover:file:bg-ciel"
+        />
+
+        {photoActuelleUrl && !photo && (
+          <label className="mt-2 flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={supprimerPhoto} onChange={(evenement) => setSupprimerPhoto(evenement.target.checked)} />
+            Supprimer la photo actuelle
+          </label>
+        )}
+
+        {erreurs.photo && <p className="mt-1 text-sm font-bold text-brand">{erreurs.photo[0]}</p>}
+      </div>
 
       <button type="submit" disabled={envoiEnCours} className="bouton mt-8 w-full text-center disabled:opacity-50">
         {envoiEnCours ? libelleEnCours : libelleBouton}

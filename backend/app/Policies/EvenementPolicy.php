@@ -20,4 +20,22 @@ class EvenementPolicy
     {
         return $utilisateur->id === $evenement->organisateur_id && ! $evenement->est_annule;
     }
+
+    // Lire le chat : l'organisateur ou une personne inscrite
+    public function lire_messages(User $utilisateur, Evenement $evenement): bool
+    {
+        $est_organisateur = $utilisateur->id === $evenement->organisateur_id;
+
+        $est_inscrit = $evenement->participants()
+            ->where('users.id', $utilisateur->id)
+            ->exists();
+
+        return $est_organisateur || $est_inscrit;
+    }
+
+    // Écrire : mêmes personnes, et seulement si l'événement n'est pas annulé
+    public function ecrire_message(User $utilisateur, Evenement $evenement): bool
+    {
+        return $this->lire_messages($utilisateur, $evenement) && ! $evenement->est_annule;
+    }
 }

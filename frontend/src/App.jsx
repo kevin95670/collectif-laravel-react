@@ -10,6 +10,8 @@ import PageRechercheEvenements from "./pages/PageRechercheEvenements";
 import PageDetailEvenement from "./pages/PageDetailEvenement";
 import PageMesEvenements from "./pages/PageMesEvenements";
 import PageModificationEvenement from "./pages/PageModificationEvenement";
+import PageProfil from "./pages/PageProfil";
+import PagePasTrouvee from "./pages/PagePasTrouvee";
 
 export default function App() {
   return (
@@ -46,6 +48,15 @@ export default function App() {
               </RouteProtegee>
             }
           />  
+          <Route
+            path="/profil"
+            element={
+              <RouteProtegee>
+                <PageProfil />
+              </RouteProtegee>
+            }
+          />
+          <Route path="*" element={<PagePasTrouvee />} />
         </Routes>
       </main>
 

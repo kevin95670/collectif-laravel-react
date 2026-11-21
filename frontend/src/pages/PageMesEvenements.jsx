@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import CarteEvenement from "../components/CarteEvenement";
 import { recupererMesEvenements } from "../api/evenements";
 import { formaterDate } from "../utilitaires/dates";
+import { libelleDuSport } from "../constantes/sports";
 
 // Un titre + une grille de cartes cliquables, ou un message si la liste est vide.
 // Il sert deux fois dans la page : un composant évite de dupliquer le code.
@@ -16,9 +17,11 @@ function SectionEvenements({ titre, evenements, messageVide }) {
       ) : (
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {evenements.map((evenement) => (
-            <Link key={evenement.id} to={"/evenements/" + evenement.id}>
+            <Link className="block h-full" key={evenement.id} to={"/evenements/" + evenement.id}>
               <CarteEvenement
                 titre={evenement.titre}
+                photoUrl={evenement.photo_url}
+                libelleSport={libelleDuSport(evenement.sport)}
                 adresse={evenement.adresse + ", " + evenement.ville}
                 dateDebut={formaterDate(evenement.date_debut)}
                 nombrePlacesMax={evenement.nombre_places_max}

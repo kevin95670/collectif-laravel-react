@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import FormulaireEvenement from "../components/FormulaireEvenement";
-import { creerEvenement } from "../api/evenements";
+import { creerEvenement, televerserPhoto } from "../api/evenements";
 
-// Formulaire vide au départ (défini hors du composant : il ne change jamais)
 const VALEURS_INITIALES = {
   titre: "",
   sport: "football",
@@ -17,10 +16,23 @@ const VALEURS_INITIALES = {
 export default function PageCreationEvenement() {
   const naviguer = useNavigate();
 
-  // Ce que le formulaire doit faire à l'envoi : créer, puis retourner à l'accueil
-  async function creer(donnees) {
-    await creerEvenement(donnees);
-    naviguer("/");
+  async function creer(donnees, optionsPhoto) {
+    // 1. On crée l'événement : la réponse contient son id
+    const evenementCree = await creerEvenement(donnees);
+
+    // 2. S'il y a une photo, on l'envoie ensuite (c'est une requête à part côté Laravel)
+    if (optionsPhoto.photo) {
+      try {
+        await televerserPhoto(evenementCree.id, optionsPhoto.photo);
+      } catch {
+        // L'événement existe déjà : on ne recrée rien. On va sur sa page de modification,
+        // pour que la personne puisse réessayer d'ajouter la photo.
+        naviguer("/evenements/" + evenementCree.id + "/modifier");
+        return;
+      }
+    }
+
+    naviguer("/evenements/" + evenementCree.id);   // on arrive directement sur la page de l'événement créé
   }
 
   return (

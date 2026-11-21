@@ -19,3 +19,9 @@ export function deconnecter() {
 export function recupererUtilisateurConnecte() {
   return appelerApi("/api/utilisateur");
 }
+
+// PUT /api/profil -> ProfilController@modifier_informations
+export const modifierProfil = (donnees) => appelerApi("/api/profil", { method: "PUT", donnees });
+
+// PUT /api/profil/mot-de-passe -> ProfilController@modifier_mot_de_passe
+export const modifierMotDePasse = (donnees) => appelerApi("/api/profil/mot-de-passe", { method: "PUT", donnees });

@@ -4,6 +4,9 @@ import { useUtilisateur } from "../contexts/ContexteUtilisateur";
 import { recupererEvenement, rejoindreEvenement, quitterEvenement, annulerEvenement } from "../api/evenements";
 import { LISTE_DES_SPORTS } from "../constantes/sports";
 import { formaterDate } from "../utilitaires/dates";
+import ChatEvenement from "../components/ChatEvenement";
+import PhotoEvenement from "../components/PhotoEvenement";
+import MiniCarte from "../components/MiniCarte";
 
 export default function PageDetailEvenement() {
   // useParams lit les parties variables de l'URL : pour "/evenements/3", id vaut "3"
@@ -71,6 +74,8 @@ export default function PageDetailEvenement() {
   const libelleSport = LISTE_DES_SPORTS.find((sport) => sport.valeur === evenement.sport)?.libelle;
   const estOrganisateur = utilisateur && utilisateur.id === evenement.organisateur_id;
   const estComplet = evenement.nombre_places_restantes === 0;
+    // Le chat est réservé à l'organisateur et aux personnes inscrites (le serveur le vérifie aussi)
+  const peutAccederAuChat = utilisateur && (estOrganisateur || evenement.utilisateur_est_inscrit);
 
   // Quel bouton afficher ? On décide ici, pour garder le JSX lisible.
   function afficherBoutonInscription() {
@@ -112,15 +117,16 @@ export default function PageDetailEvenement() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-16 md:px-10">
+    <div className="mx-auto max-w-6xl px-6 py-16 md:px-10">
       <div className="text-center">
         <div className="sous-titre">- {libelleSport} -</div>
         <h1 className="mt-4 text-5xl">{evenement.titre}</h1>
         <p className="mt-3 text-sm text-gris">Organisé par {evenement.organisateur.name}</p>
       </div>
+      <PhotoEvenement url={evenement.photo_url} alt={evenement.titre} className="mt-8 h-72 w-full" />
 
       <div className="mt-10 grid gap-8 md:grid-cols-3">
-        {/* Colonne de gauche : les informations */}
+        {/* Colonne de gauche : les informations, puis la carte, dans le même bloc blanc */}
         <div className="border border-line bg-white p-8 md:col-span-2">
           <h2 className="text-2xl">Informations</h2>
           <p className="mt-4"><span className="font-bold text-marine">Début :</span> {formaterDate(evenement.date_debut)}</p>
@@ -130,6 +136,14 @@ export default function PageDetailEvenement() {
           {/* whitespace-pre-line : respecte les retours à la ligne de la description */}
           {evenement.description && (
             <p className="mt-6 whitespace-pre-line">{evenement.description}</p>
+          )}
+
+          {/* Carte : seulement si l'adresse a pu être localisée par le back.
+              L'adresse est déjà écrite dans "Lieu :" juste au-dessus, on ne la répète pas. */}
+          {evenement.latitude !== null && evenement.longitude !== null && (
+            <div className="mt-8">
+              <MiniCarte latitude={evenement.latitude} longitude={evenement.longitude} />
+            </div>
           )}
         </div>
 
@@ -157,6 +171,14 @@ export default function PageDetailEvenement() {
           )}
         </div>
       </div>
+        {peutAccederAuChat ? (
+          // key : si on passe d'un événement à un autre, le chat repart de zéro
+          <ChatEvenement key={evenement.id} evenementId={evenement.id} peutEcrire={!evenement.est_annule} />
+        ) : (
+          <p className="mt-10 text-center text-sm text-gris">
+            La discussion est réservée aux personnes inscrites à l'événement.
+          </p>
+        )}
     </div>
   );
 }

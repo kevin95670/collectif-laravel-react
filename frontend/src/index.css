@@ -50,3 +50,18 @@ h1, h2, h3 {
     @apply font-titre text-4xl leading-none text-brand;
   }
 }
+
+/* Animation d'apparition de la maquette : le texte monte en fondu.
+   Elle n'est activée que si la personne n'a pas demandé de réduire les animations
+   dans son système (accessibilité). */
+@keyframes apparition {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .apparition {
+    /* "both" : l'élément reste invisible pendant le délai, puis reste affiché à la fin */
+    animation: apparition 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}

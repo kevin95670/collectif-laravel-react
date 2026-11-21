@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Services\GeocodageAdresse;
 
 class Evenement extends Model
 {
@@ -15,6 +19,9 @@ class Evenement extends Model
         'football', 'running', 'basket', 'randonnee',
         'padel', 'tennis', 'natation', 'velo', 'autre',
     ];
+
+    // $appends : ajoute l'attribut calculé "photo_url" à chaque conversion en JSON
+    protected $appends = ['photo_url'];
 
     // Champs autorisés pour Evenement::create([...]) : protège contre le mass assignment.
     protected $fillable = [
@@ -29,7 +36,32 @@ class Evenement extends Model
         'date_debut' => 'datetime',
         'date_fin' => 'datetime',
         'est_annule' => 'boolean',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
+
+    // booted() est appelée une fois au démarrage du modèle : on y branche des "écouteurs" d'événements Eloquent.
+    protected static function booted(): void
+    {
+        // "saving" se déclenche juste avant chaque enregistrement (création ET modification)
+        static::saving(function (Evenement $evenement) {
+            // isDirty : est-ce que ces champs viennent d'être changés (et pas encore enregistrés) ?
+            $adresse_a_change = $evenement->isDirty(['adresse', 'ville']);
+            $coordonnees_manquantes = $evenement->latitude === null;
+
+            if (! $adresse_a_change && ! $coordonnees_manquantes) {
+                return;   // rien à recalculer
+            }
+
+            // app(...) : demande à Laravel de fabriquer le service (comme l'injection de dépendances en Symfony)
+            $coordonnees = app(GeocodageAdresse::class)
+                ->trouver_coordonnees($evenement->adresse, $evenement->ville);
+
+            // ?? null : si l'adresse n'est pas trouvée, on remet les coordonnées à vide
+            $evenement->latitude = $coordonnees['latitude'] ?? null;
+            $evenement->longitude = $coordonnees['longitude'] ?? null;
+        });
+    }
 
     // Un événement appartient à un organisateur (un User).
     // Par défaut Laravel chercherait une colonne "user_id" : on indique le vrai nom.
@@ -45,5 +77,24 @@ class Evenement extends Model
     {
         return $this->belongsToMany(User::class, 'inscriptions', 'evenement_id', 'user_id')
             ->withTimestamps();   // remplit created_at/updated_at de la table de liaison
+    }
+
+    // Un événement a plusieurs messages (hasMany : la clé étrangère est dans la table messages)
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'evenement_id');
+    }
+
+    // Attribut calculé ("accesseur") : $evenement->photo_url donne l'adresse complète de l'image.
+    // Le nom de la méthode (photoUrl) est imposé par Laravel : camelCase de l'attribut photo_url.
+    protected function photoUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->photo_chemin === null) {
+                return null;
+            }
+            // Storage::url donne "http://localhost:8000/storage/evenements/abc123.jpg"
+            return Storage::disk('public')->url($this->photo_chemin);
+        });
     }
 }

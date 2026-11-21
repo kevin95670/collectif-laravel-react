@@ -52,3 +52,21 @@ export function modifierEvenement(identifiant, donnees) {
 export function annulerEvenement(identifiant) {
   return appelerApi("/api/evenements/" + identifiant + "/annulation", { method: "POST" });
 }
+
+// POST /api/evenements/{id}/photo -> EvenementController@televerser_photo
+export function televerserPhoto(identifiant, fichier) {
+  // FormData : le format d'un formulaire HTML avec fichier (multipart/form-data)
+  const formulaire = new FormData();
+  formulaire.append("photo", fichier);   // "photo" : le nom du champ attendu par Laravel
+  return appelerApi("/api/evenements/" + identifiant + "/photo", { method: "POST", formulaire });
+}
+
+// DELETE /api/evenements/{id}/photo -> EvenementController@supprimer_photo
+export function supprimerPhotoEvenement(identifiant) {
+  return appelerApi("/api/evenements/" + identifiant + "/photo", { method: "DELETE" });
+}
+
+// GET /api/sports -> [{ sport: "football", nombre_evenements: 3 }, ...]
+export function recupererSports() {
+  return appelerApi("/api/sports");
+}

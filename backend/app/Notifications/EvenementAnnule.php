@@ -18,7 +18,16 @@ class EvenementAnnule extends Notification implements ShouldQueue
 
     public function via(object $destinataire): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    public function toArray(object $destinataire): array
+    {
+        return [
+            'evenement_id' => $this->evenement->id,
+            'titre' => 'Événement annulé · ' . $this->evenement->titre,
+            'detail' => "L'organisateur a annulé l'événement.",
+        ];
     }
 
     public function toMail(object $destinataire): MailMessage

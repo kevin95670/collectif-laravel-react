@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import FormulaireEvenement from "../components/FormulaireEvenement";
 import { useUtilisateur } from "../contexts/ContexteUtilisateur";
-import { modifierEvenement, recupererEvenement } from "../api/evenements";
+import { modifierEvenement, recupererEvenement, supprimerPhotoEvenement, televerserPhoto } from "../api/evenements";
 import { versChampDateHeure } from "../utilitaires/dates";
 
 export default function PageModificationEvenement() {
@@ -21,9 +21,16 @@ export default function PageModificationEvenement() {
       .finally(() => setChargement(false));
   }, [id]);
 
-  // Ce que le formulaire doit faire à l'envoi : enregistrer, puis revenir sur la page de l'événement
-  async function enregistrer(donnees) {
+  // Ce que le formulaire doit faire à l'envoi : enregistrer, gérer la photo, puis revenir sur la page de l'événement
+  async function enregistrer(donnees, optionsPhoto) {
     await modifierEvenement(id, donnees);
+
+    if (optionsPhoto.photo) {
+      await televerserPhoto(id, optionsPhoto.photo);          // nouvelle photo : remplace l'ancienne
+    } else if (optionsPhoto.supprimerPhoto) {
+      await supprimerPhotoEvenement(id);                      // case cochée : on retire la photo
+    }
+
     naviguer("/evenements/" + id);
   }
 
@@ -57,6 +64,7 @@ export default function PageModificationEvenement() {
 
       <FormulaireEvenement
         valeursInitiales={valeursInitiales}
+        photoActuelleUrl={evenement.photo_url}
         libelleBouton="Enregistrer les modifications"
         libelleEnCours="Enregistrement..."
         auEnvoi={enregistrer}

@@ -29,10 +29,25 @@ class EvenementModifie extends Notification implements ShouldQueue
     {
     }
 
-    // Par quels canaux envoyer ? Ici seulement l'e-mail.
+    // Deux canaux : l'e-mail ET la notification dans la cloche
     public function via(object $destinataire): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    // Les données de la notification enregistrée en base
+    public function toArray(object $destinataire): array
+    {
+        $libelles_modifies = array_map(
+            fn ($champ) => self::LIBELLES_DES_CHAMPS[$champ],
+            $this->champs_modifies
+        );
+
+        return [
+            'evenement_id' => $this->evenement->id,
+            'titre' => 'Événement modifié · ' . $this->evenement->titre,
+            'detail' => 'Ce qui a changé : ' . implode(', ', $libelles_modifies) . '.',
+        ];
     }
 
     // Construit l'e-mail. $destinataire est le User qui le reçoit.

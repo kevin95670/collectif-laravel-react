@@ -1,53 +1,52 @@
-// Adresse de base de l'API (variable définie dans docker-compose.yml).
-const URL_API = import.meta.env.VITE_API_URL;
+const URL_API = import.meta.env.VITE_API_URL;   // "http://localhost:8000"
 
-// Lit la valeur d'un cookie du navigateur à partir de son nom.
+// Lit la valeur d'un cookie du navigateur
 function lireCookie(nom) {
-  const correspondance = document.cookie.match(new RegExp("(^|; )" + nom + "=([^;]*)"));
-  return correspondance ? decodeURIComponent(correspondance[2]) : null;
+  const trouve = document.cookie.match(new RegExp("(^|; )" + nom + "=([^;]*)"));
+  return trouve ? decodeURIComponent(trouve[2]) : null;
 }
 
-// Demande à Laravel de déposer le cookie XSRF-TOKEN (étape 1 du schéma de Sanctum).
-async function obtenirCookieCsrf() {
+// Demande à Laravel de déposer le cookie XSRF-TOKEN
+export async function obtenirCookieCsrf() {
   await fetch(URL_API + "/sanctum/csrf-cookie", { credentials: "include" });
 }
 
-// Fonction commune : tous les autres fichiers de api/ passent par elle.
-// options.donnees : un objet JavaScript à envoyer en JSON (pour POST, PUT...).
 export async function appelerApi(chemin, options = {}) {
-  const methode = (options.method || "GET").toUpperCase();
-  const modifieDesDonnees = methode !== "GET";
+  const methode = options.method ?? "GET";
+  const entetes = { Accept: "application/json", ...options.headers };
 
-  // Pour toute requête qui modifie des données, Laravel exige le jeton CSRF.
-  if (modifieDesDonnees && !lireCookie("XSRF-TOKEN")) {
-    await obtenirCookieCsrf();
+  // Pour POST, PUT, DELETE : jeton CSRF recopié dans l'en-tête
+  if (methode !== "GET") {
+    if (!lireCookie("XSRF-TOKEN")) await obtenirCookieCsrf();
+    entetes["X-XSRF-TOKEN"] = lireCookie("XSRF-TOKEN");
   }
 
-  const entetes = { Accept: "application/json" };
-  if (modifieDesDonnees) {
-    entetes["X-XSRF-TOKEN"] = lireCookie("XSRF-TOKEN");  // on renvoie le jeton lu dans le cookie
-  }
-  if (options.donnees) {
+  let corps;
+  if (options.formulaire) {
+    // Envoi de fichier : un objet FormData. On ne met SURTOUT PAS de Content-Type :
+    // le navigateur le fabrique lui-même, avec la "frontière" qui sépare les champs.
+    corps = options.formulaire;
+  } else if (options.donnees) {
+    // Raccourci : un objet JavaScript envoyé en JSON
+    corps = JSON.stringify(options.donnees);
     entetes["Content-Type"] = "application/json";
   }
 
   const reponse = await fetch(URL_API + chemin, {
     method: methode,
-    credentials: "include",   // le navigateur envoie et reçoit les cookies
+    credentials: "include",     // envoie et reçoit les cookies
     headers: entetes,
-    body: options.donnees ? JSON.stringify(options.donnees) : undefined,
+    body: corps,
   });
 
-  // fetch ne signale pas les erreurs HTTP tout seul : on le fait nous-mêmes.
+  const donnees = await reponse.json().catch(() => null);
+
   if (!reponse.ok) {
-    // Laravel renvoie du JSON même pour les erreurs. Pour un 422 (données invalides),
-    // il y a une clé "errors" : { email: ["..."], password: ["..."] }.
-    const corps = await reponse.json().catch(() => ({}));
-    const erreur = new Error(corps.message || "Erreur " + reponse.status);
+    // Laravel renvoie { message, errors: { champ: ["texte"] } } pour une erreur de validation (422)
+    const erreur = new Error(donnees?.message ?? "Erreur " + reponse.status);
     erreur.statut = reponse.status;
-    erreur.erreurs = corps.errors || {};
+    erreur.erreurs = donnees?.errors ?? {};
     throw erreur;
   }
-
-  return reponse.json();
+  return donnees;
 }

@@ -37,10 +37,15 @@ export function FournisseurUtilisateur({ children }) {
     setUtilisateur(null);
   }
 
+    // Remplace l'utilisateur gardé en mémoire (après une modification du profil)
+  function mettreAJourUtilisateur(nouvelUtilisateur) {
+    setUtilisateur(nouvelUtilisateur);
+  }
+
   // "value" : tout ce que les composants pourront lire.
   return (
     <ContexteUtilisateur.Provider
-      value={{ utilisateur, chargementUtilisateur, sInscrire, seConnecter, seDeconnecter }}
+      value={{ utilisateur, chargementUtilisateur, seConnecter, sInscrire, seDeconnecter, mettreAJourUtilisateur }}
     >
       {children}
     </ContexteUtilisateur.Provider>

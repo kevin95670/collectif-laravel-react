@@ -6,6 +6,8 @@ import { recupererEvenements } from "../api/evenements";
 import { LISTE_DES_SPORTS } from "../constantes/sports";
 import { formaterDate } from "../utilitaires/dates";
 import { Link } from "react-router-dom";
+import { libelleDuSport } from "../constantes/sports";
+import { useSearchParams } from "react-router-dom";
 
 // Même liste que pour la création, avec une première option "vide" pour ne pas filtrer
 const OPTIONS_SPORTS_FILTRE = [{ valeur: "", libelle: "Tous les sports" }, ...LISTE_DES_SPORTS];
@@ -15,6 +17,8 @@ export default function PageRechercheEvenements() {
   const [sport, setSport] = useState("");
   const [ville, setVille] = useState("");
   const [date, setDate] = useState("");
+
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [evenements, setEvenements] = useState([]);
   const [chargement, setChargement] = useState(true);
@@ -90,9 +94,11 @@ export default function PageRechercheEvenements() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {evenements.map((evenement) => (
             // key se met sur l'élément le plus extérieur du .map : ici, le Link
-            <Link key={evenement.id} to={"/evenements/" + evenement.id}>
+            <Link className="block h-full" key={evenement.id} to={"/evenements/" + evenement.id}>
               <CarteEvenement
                 titre={evenement.titre}
+                photoUrl={evenement.photo_url}
+                libelleSport={libelleDuSport(evenement.sport)}
                 adresse={`${evenement.adresse}, ${evenement.ville}`}
                 dateDebut={formaterDate(evenement.date_debut)}
                 nombrePlacesMax={evenement.nombre_places_max}

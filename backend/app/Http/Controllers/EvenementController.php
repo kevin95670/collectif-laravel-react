@@ -15,6 +15,8 @@ use App\Notifications\EvenementAnnule;
 use App\Notifications\EvenementModifie;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
+use App\Notifications\NouveauParticipant;
 
 class EvenementController extends Controller
 {
@@ -123,6 +125,12 @@ class EvenementController extends Controller
             return response()->json(['message' => $message_erreur], 422);
         }
 
+        // Prévenir l'organisateur (sauf s'il s'est inscrit lui-même)
+        if ($evenement->organisateur_id !== $utilisateur->id) {
+            // notify() est fourni par le trait Notifiable du modèle User
+            $evenement->organisateur->notify(new NouveauParticipant($evenement, $utilisateur));
+        }
+
         // On renvoie l'événement à jour, pour que React n'ait pas à le redemander
         return response()->json($this->construire_detail_evenement($evenement, $utilisateur), 201);
     }
@@ -225,5 +233,64 @@ class EvenementController extends Controller
         return $evenement->participants()
             ->where('users.id', '!=', $evenement->organisateur_id)
             ->get();
+    }
+
+    // GET /api/sports : pour chaque sport, le nombre d'événements à venir (utilisé par l'accueil)
+    public function compter_evenements_par_sport(): JsonResponse
+    {
+        // groupBy : un seul décompte par sport, calculé par la base.
+        // pluck('nombre_evenements', 'sport') donne un tableau du type ['football' => 3, 'padel' => 1]
+        $decomptes = Evenement::query()
+            ->where('est_annule', false)
+            ->where('date_debut', '>=', now())
+            ->select('sport', DB::raw('count(*) as nombre_evenements'))
+            ->groupBy('sport')
+            ->pluck('nombre_evenements', 'sport');
+
+        // On renvoie TOUS les sports, avec 0 quand il n'y a aucun événement
+        $liste_des_sports = collect(Evenement::LISTE_DES_SPORTS)->map(fn ($sport) => [
+            'sport' => $sport,
+            'nombre_evenements' => $decomptes->get($sport, 0),   // get(clé, valeur par défaut)
+        ]);
+
+        return response()->json($liste_des_sports->values());
+    }
+
+    // POST /api/evenements/{evenement}/photo (envoi d'un fichier)
+    public function televerser_photo(Request $requete, Evenement $evenement): JsonResponse
+    {
+        // Seul l'organisateur (même règle que pour modifier)
+        Gate::authorize('modifier', $evenement);
+
+        $requete->validate([
+            // image : un vrai fichier image ; max en kilo-octets (5120 = 5 Mo)
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+
+        // On supprime l'ancienne photo pour ne pas laisser de fichiers orphelins
+        if ($evenement->photo_chemin !== null) {
+            Storage::disk('public')->delete($evenement->photo_chemin);
+        }
+
+        // store() enregistre dans storage/app/public/evenements avec un nom aléatoire
+        // et renvoie le chemin relatif ("evenements/abc123.jpg")
+        $chemin_photo = $requete->file('photo')->store('evenements', 'public');
+
+        $evenement->update(['photo_chemin' => $chemin_photo]);
+
+        return response()->json($this->construire_detail_evenement($evenement, $requete->user()));
+    }
+
+    // DELETE /api/evenements/{evenement}/photo
+    public function supprimer_photo(Request $requete, Evenement $evenement): JsonResponse
+    {
+        Gate::authorize('modifier', $evenement);
+
+        if ($evenement->photo_chemin !== null) {
+            Storage::disk('public')->delete($evenement->photo_chemin);
+            $evenement->update(['photo_chemin' => null]);
+        }
+
+        return response()->json($this->construire_detail_evenement($evenement, $requete->user()));
     }
 }

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useUtilisateur } from "../contexts/ContexteUtilisateur";
 import MenuUtilisateur from "./MenuUtilisateur";
+import BoutonNotifications from "./BoutonNotifications";
 
 export default function EnTete() {
   const { utilisateur, chargementUtilisateur } = useUtilisateur();
@@ -21,7 +22,11 @@ export default function EnTete() {
           {/* Pendant le chargement on n'affiche rien à droite, pour éviter un clignotement */}
           {!chargementUtilisateur && (
             utilisateur ? (
-              <MenuUtilisateur />
+              // Connecté : la cloche et le petit bonhomme, côte à côte
+              <div className="flex items-center gap-3">
+                <BoutonNotifications />
+                <MenuUtilisateur />
+              </div>
             ) : (
               <Link to="/connexion" className="bouton">Se connecter</Link>
             )

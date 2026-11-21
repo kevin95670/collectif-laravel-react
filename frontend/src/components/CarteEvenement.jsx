@@ -1,18 +1,21 @@
-export default function CarteEvenement({ titre, adresse, dateDebut, nombrePlacesMax }) {
+import PhotoEvenement from "./PhotoEvenement";
+
+export default function CarteEvenement({ titre, adresse, dateDebut, nombrePlacesMax, photoUrl, libelleSport }) {
   return (
-    // Cadre bleu ciel avec un léger soulèvement au survol.
-    <article className="bg-ciel p-2.5 transition-transform duration-300 hover:-translate-y-2">
-      <div className="bg-white px-7 py-9 text-center">
-        <h3 className="text-3xl">{titre}</h3>
+    // Cadre ciel + intérieur blanc ; h-full : la carte remplit toute la hauteur de sa case de grille
+    <article className="h-full bg-ciel p-3 shadow-carte">
+      <div className="flex h-full flex-col bg-white">
+        {/* Hauteur fixe : toutes les cartes ont la même zone photo, avec ou sans image */}
+        <PhotoEvenement url={photoUrl} alt={titre} className="h-48 w-full rounded-t-[96px]" />
 
-        {/* Petit trait de séparation : bg-marine/40 = marine à 40 % d'opacité */}
-        <div className="mx-auto my-4 h-px w-14 bg-marine/40"></div>
-
-        <p className="text-sm leading-7">{adresse}</p>
-        <p className="text-sm leading-7">{dateDebut}</p>
-        <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
-          {nombrePlacesMax} places
-        </p>
+        <div className="flex flex-1 flex-col p-6">
+          {libelleSport && <p className="sous-titre">- {libelleSport} -</p>}
+          <h3 className="mt-2 text-3xl">{titre}</h3>
+          <p className="mt-2 text-sm text-gris">{adresse}</p>
+          <p className="mt-1 text-sm text-gris">{dateDebut}</p>
+          {/* mt-auto : la ligne des places se colle en bas de la carte */}
+          <p className="mt-auto pt-4 font-bold text-brand">{nombrePlacesMax} places</p>
+        </div>
       </div>
     </article>
   );
