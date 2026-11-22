@@ -1,13 +1,13 @@
 export default function ChampSelection({ id, libelle, valeur, auChangement, options, erreurs }) {
   return (
     <div className="mt-5 first:mt-0">
-      <label className="block text-sm font-bold text-marine" htmlFor={id}>{libelle}</label>
+      <label className="block text-xs font-bold uppercase tracking-[.09em] text-marine" htmlFor={id}>{libelle}</label>
 
       <select
         id={id}
         value={valeur}
         onChange={(evenement) => auChangement(evenement.target.value)}
-        className="mt-1 w-full border border-line bg-white px-4 py-3"
+        className="mt-2 w-full border border-line bg-white px-4 py-3 text-sm text-marine focus:border-brand"
       >
         {/* Une <option> par élément de la liste. key = identifiant unique, comme :key en Vue */}
         {options.map((option) => (

@@ -29,6 +29,7 @@ class EvenementController extends Controller
     {
         $requete_evenements = Evenement::query()
             ->with('organisateur:id,name')
+            ->withCount('participants')
             ->where('est_annule', false)
             ->where('date_debut', '>=', now())
             ->orderBy('date_debut');

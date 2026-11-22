@@ -33,7 +33,7 @@ export default function SectionSports() {
     .slice(0, 4);
 
   return (
-    <section className="bg-creme py-24">
+    <section className="bg-creme pt-24">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <div className="text-center">
           <div className="numero">02</div>
@@ -51,6 +51,7 @@ export default function SectionSports() {
               <div className="overflow-hidden">
                 {/* group-hover : l'image s'agrandit quand on survole la carte entière */}
                 <ZonePhotoDecorative
+                  src={"/images/sport-" + sport.sport + ".webp"}
                   couleur={COULEURS_DES_SPORTS[sport.sport]}
                   legende={"Photo : " + libelleDuSport(sport.sport)}
                   className="h-[360px] transition duration-500 group-hover:scale-105 motion-reduce:transition-none"

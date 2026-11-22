@@ -1,9 +1,10 @@
 export default function ChampFormulaire({ id, libelle, type = "text", valeur, auChangement, erreurs, multiligne = false }) {
-  const classesChamp = "mt-1 w-full border border-line bg-white px-4 py-3";
+  // focus:border-brand : la bordure devient bleue quand on clique dans le champ
+  const classesChamp = "mt-2 w-full border border-line bg-white px-4 py-3 text-sm text-marine focus:border-brand";
 
   return (
     <div className="mt-5 first:mt-0">
-      <label className="block text-sm font-bold text-marine" htmlFor={id}>{libelle}</label>
+      <label className="block text-xs font-bold uppercase tracking-[.09em] text-marine" htmlFor={id}>{libelle}</label>
 
       {/* multiligne = true : une zone de texte (textarea) ; sinon un champ simple (input) */}
       {multiligne ? (

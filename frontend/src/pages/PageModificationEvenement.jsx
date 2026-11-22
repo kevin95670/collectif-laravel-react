@@ -34,8 +34,8 @@ export default function PageModificationEvenement() {
     naviguer("/evenements/" + id);
   }
 
-  if (chargement) return <p className="p-10 text-center">Chargement...</p>;
-  if (erreur) return <p className="p-10 text-center font-bold">{erreur}</p>;
+  if (chargement) return <p className="p-16 text-center text-gris">Chargement...</p>;
+  if (erreur) return <p className="p-16 text-center font-bold">{erreur}</p>;
 
   // Le serveur refuserait de toute façon (Policy), mais on évite d'afficher un formulaire inutile
   if (evenement.organisateur_id !== utilisateur.id || evenement.est_annule) {
@@ -56,10 +56,12 @@ export default function PageModificationEvenement() {
   };
 
   return (
-    <div className="mx-auto max-w-xl px-10 py-16">
+    <div className="mx-auto max-w-3xl px-6 py-16 md:px-10">
       <div className="text-center">
-        <div className="sous-titre">- modification -</div>
-        <h1 className="mt-4 text-5xl">Modifier l'événement</h1>
+        <div className="sous-titre apparition">- modification -</div>
+        <h1 className="apparition mt-4 text-5xl leading-[1.05] md:text-6xl" style={{ animationDelay: "0.15s" }}>
+          Modifier l'événement
+        </h1>
       </div>
 
       <FormulaireEvenement

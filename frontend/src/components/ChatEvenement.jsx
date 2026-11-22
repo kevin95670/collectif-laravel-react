@@ -165,100 +165,107 @@ export default function ChatEvenement({ evenementId, peutEcrire }) {
   }
 
   return (
-    <section className="mt-10 border border-line bg-white">
-      <h2 className="border-b border-line px-6 py-4 text-2xl">Discussion</h2>
+    // Même cadre que les autres blocs : ciel, puis intérieur blanc
+    <section className="mt-10 bg-ciel p-2.5 shadow-carte">
+      <div className="bg-white">
+        <div className="border-b border-line px-6 py-5">
+          <div className="sous-titre">- les inscrits discutent -</div>
+          <h2 className="mt-1 text-3xl">La discussion</h2>
+        </div>
 
-      {/* "relative" : le bouton "nouveaux messages" se place par rapport à ce bloc */}
-      <div className="relative">
-        <div ref={zoneMessagesRef} onScroll={surDefilement} className="h-96 space-y-4 overflow-y-auto p-6">
-          {chargementInitial && <p className="text-center text-sm text-gris">Chargement...</p>}
-          {erreurChargement && <p className="text-center text-sm font-bold text-brand">{erreurChargement}</p>}
-          {!chargementInitial && !erreurChargement && messages.length === 0 && (
-            <p className="text-center text-sm text-gris">Aucun message pour l'instant. Lance la discussion !</p>
-          )}
+        {/* "relative" : le bouton "nouveaux messages" se place par rapport à ce bloc */}
+        <div className="relative">
+          <div ref={zoneMessagesRef} onScroll={surDefilement} className="h-96 space-y-4 overflow-y-auto p-6">
+            {chargementInitial && <p className="text-center text-sm text-gris">Chargement...</p>}
+            {erreurChargement && <p className="text-center text-sm font-bold text-brand">{erreurChargement}</p>}
+            {!chargementInitial && !erreurChargement && messages.length === 0 && (
+              <p className="text-center text-sm text-gris">Aucun message pour l'instant. Lance la discussion !</p>
+            )}
 
-          {messages.map((message) => {
-            const estMien = message.auteur.id === utilisateur.id;
+            {messages.map((message) => {
+              const estMien = message.auteur.id === utilisateur.id;
 
-            return (
-              <div key={message.id} className={"flex " + (estMien ? "justify-end" : "justify-start")}>
-                <div className={"max-w-[80%] px-4 py-3 " + (estMien ? "bg-ciel" : "border border-line bg-white")}>
-                  {!estMien && <p className="text-xs font-bold text-brand">{message.auteur.name}</p>}
+              return (
+                <div key={message.id} className={"flex " + (estMien ? "justify-end" : "justify-start")}>
+                  {/* Un coin arrondi seulement (clin d'œil à l'arche) : en haut à gauche pour moi, en haut à droite pour les autres */}
+                  <div className={"max-w-[80%] px-5 py-3 " + (estMien ? "rounded-tl-3xl bg-ciel" : "rounded-tr-3xl bg-creme")}>
+                    {!estMien && <p className="text-xs font-bold text-brand">{message.auteur.name}</p>}
 
-                  {/* La citation, si ce message est une réponse */}
-                  {message.message_cite && (
-                    <div className="my-1 border-l-2 border-brand bg-black/5 px-3 py-1 text-xs">
-                      <p className="font-bold">{message.message_cite.auteur.name}</p>
-                      <p className="line-clamp-2 text-gris">{message.message_cite.contenu}</p>
-                    </div>
-                  )}
-
-                  {/* whitespace-pre-line : respecte les retours à la ligne ; break-words : coupe les mots trop longs */}
-                  <p className="whitespace-pre-line break-words text-sm">{message.contenu}</p>
-
-                  <div className="mt-1 flex items-center justify-between gap-4 text-xs text-gris">
-                    <span>{message.enAttente ? "Envoi..." : formaterHeureMessage(message.created_at)}</span>
-                    {peutEcrire && !message.enAttente && (
-                      <button type="button" onClick={() => repondreA(message)} className="font-bold hover:text-marine">
-                        Répondre
-                      </button>
+                    {/* La citation, si ce message est une réponse */}
+                    {message.message_cite && (
+                      <div className="my-1 border-l-2 border-brand bg-white/60 px-3 py-1 text-xs">
+                        <p className="font-bold text-marine">{message.message_cite.auteur.name}</p>
+                        <p className="line-clamp-2 text-gris">{message.message_cite.contenu}</p>
+                      </div>
                     )}
+
+                    {/* whitespace-pre-line : respecte les retours à la ligne ; break-words : coupe les mots trop longs */}
+                    <p className="whitespace-pre-line break-words text-sm text-marine">{message.contenu}</p>
+
+                    <div className="mt-1 flex items-center justify-between gap-4 text-xs text-gris">
+                      <span>{message.enAttente ? "Envoi..." : formaterHeureMessage(message.created_at)}</span>
+                      {peutEcrire && !message.enAttente && (
+                        <button type="button" onClick={() => repondreA(message)} className="font-bold hover:text-marine">
+                          Répondre
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {nouveauxMessagesNonVus && (
+            <button
+              type="button"
+              onClick={descendreEnBas}
+              className="bouton bouton-petit absolute bottom-4 left-1/2 -translate-x-1/2"
+            >
+              Nouveaux messages ↓
+            </button>
+          )}
         </div>
 
-        {nouveauxMessagesNonVus && (
-          <button
-            type="button"
-            onClick={descendreEnBas}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-marine px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-carte"
-          >
-            Nouveaux messages ↓
-          </button>
-        )}
-      </div>
-
-      {peutEcrire ? (
-        <div className="border-t border-line p-4">
-          {/* Bandeau "Réponse à ..." */}
-          {messageCite && (
-            <div className="mb-3 flex items-start justify-between gap-4 border-l-2 border-brand bg-black/5 px-3 py-2 text-xs">
-              <div>
-                <p className="font-bold">Réponse à {messageCite.auteur.name}</p>
-                <p className="line-clamp-1 text-gris">{messageCite.contenu}</p>
+        {peutEcrire ? (
+          <div className="border-t border-line p-4">
+            {/* Bandeau "Réponse à ..." */}
+            {messageCite && (
+              <div className="mb-3 flex items-start justify-between gap-4 border-l-2 border-brand bg-creme px-3 py-2 text-xs">
+                <div>
+                  <p className="font-bold text-marine">Réponse à {messageCite.auteur.name}</p>
+                  <p className="line-clamp-1 text-gris">{messageCite.contenu}</p>
+                </div>
+                <button type="button" onClick={() => setMessageCite(null)} aria-label="Annuler la réponse" className="font-bold text-marine">
+                  ✕
+                </button>
               </div>
-              <button type="button" onClick={() => setMessageCite(null)} aria-label="Annuler la réponse" className="font-bold">
-                ✕
+            )}
+
+            {erreurEnvoi && <p className="mb-2 text-sm font-bold text-brand">{erreurEnvoi}</p>}
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <textarea
+                ref={champTexteRef}
+                rows={2}
+                maxLength={1000}
+                value={texte}
+                onChange={(evenement) => setTexte(evenement.target.value)}
+                onKeyDown={surTouchePressee}
+                placeholder="Écris un message... (Entrée pour envoyer)"
+                className="flex-1 resize-none border border-line bg-white px-4 py-3 text-sm"
+              />
+              <button type="button" onClick={envoyer} disabled={texte.trim() === ""} className="bouton disabled:opacity-50">
+                Envoyer
               </button>
             </div>
-          )}
-
-          {erreurEnvoi && <p className="mb-2 text-sm font-bold text-brand">{erreurEnvoi}</p>}
-
-          <div className="flex gap-3">
-            <textarea
-              ref={champTexteRef}
-              rows={2}
-              maxLength={1000}
-              value={texte}
-              onChange={(evenement) => setTexte(evenement.target.value)}
-              onKeyDown={surTouchePressee}
-              placeholder="Écris un message... (Entrée pour envoyer)"
-              className="flex-1 resize-none border border-line px-4 py-3 text-sm"
-            />
-            <button type="button" onClick={envoyer} disabled={texte.trim() === ""} className="bouton disabled:opacity-50">
-              Envoyer
-            </button>
           </div>
-        </div>
-      ) : (
-        <p className="border-t border-line p-4 text-center text-sm text-gris">
-          Cet événement est annulé : la discussion est en lecture seule.
-        </p>
-      )}
+        ) : (
+          <p className="border-t border-line p-4 text-center text-sm text-gris">
+            Cet événement est annulé : la discussion est en lecture seule.
+          </p>
+        )}
+      </div>
     </section>
   );
 }

@@ -48,7 +48,7 @@ const AVANTAGES = [
 
 export default function SectionCommentCaMarche() {
   return (
-    <section className="bg-white py-24">
+    <section id="comment-ca-marche" className="bg-white py-24">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.2fr_0.8fr]">
           <div>

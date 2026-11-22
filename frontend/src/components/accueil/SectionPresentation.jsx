@@ -6,6 +6,7 @@ export default function SectionPresentation() {
   return (
     <section className="grid bg-creme md:min-h-[680px] md:grid-cols-2">
       <ZonePhotoDecorative
+        src="/images/accueil-presentation.webp"
         couleur="#1F4F8F"
         legende="Photo : équipe qui se félicite après un match"
         className="min-h-[320px] md:min-h-[680px]"

@@ -1,67 +1,199 @@
 @import "tailwindcss";
 
+/* ===== Le thème : couleurs, polices, ombre =====
+   Chaque valeur devient des classes : --color-marine donne bg-marine, text-marine, border-marine... */
 @theme {
-  /* Couleurs de la V3 */
-  --color-marine: #0B2A5B;   /* titres, fonds foncés, pied de page */
-  --color-brand: #0B57A8;    /* boutons, liens, sous-titres */
-  --color-ciel: #CFE3FB;     /* sections et cadres bleu clair */
-  --color-creme: #F5F0E6;    /* sections crème */
-  --color-gris: #5B6472;     /* texte courant */
-  --color-line: #D8DEE8;     /* fines bordures */
+  --color-marine: #0B2A5B;
+  --color-brand: #0B57A8;
+  --color-ciel: #CFE3FB;
+  --color-creme: #F5F0E6;
+  --color-gris: #5B6472;
+  --color-line: #D8DEE8;
 
-  /* Polices */
   --font-titre: "Cormorant Unicase", serif;
   --font-texte: "Montserrat", system-ui, sans-serif;
 
-  /* Ombre des boutons */
   --shadow-carte: 0 6px 14px rgba(11, 42, 91, 0.22);
 }
 
-body {
-  margin: 0;
-  background: #ffffff;
-  color: var(--color-gris);
-  font-family: var(--font-texte);
+/* ===== Les styles de base ===== */
+@layer base {
+  body {
+    font-family: var(--font-texte);
+    color: var(--color-marine);
+    background: var(--color-creme);
+  }
+
+  /* Tous les titres : Cormorant Unicase en bleu marine. La taille vient des classes (text-5xl...). */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-titre);
+    font-weight: 500;
+    color: var(--color-marine);
+    letter-spacing: 0.01em;
+    line-height: 1.12;
+  }
+
+  /* Le contour de focus : visible quand on navigue au clavier (accessibilité) */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 3px;
+  }
 }
 
-/* Tous les titres : Cormorant Unicase, en marine. */
-h1, h2, h3 {
-  font-family: var(--font-titre);
-  font-weight: 500;
-  color: var(--color-marine);
-}
-
-/* Nos propres classes réutilisables, construites avec les classes Tailwind (@apply). */
+/* ===== Les composants récurrents ===== */
 @layer components {
-  /* Le bouton rectangulaire en majuscules de la V3 */
-  .bouton {
-    @apply inline-block bg-brand px-8 py-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-carte transition duration-200 hover:-translate-y-0.5 hover:bg-marine;
-  }
-  /* Le petit sous-titre entre tirets : "- à propos -" */
+  /* Sous-titre de section : "- comment ça marche -" */
   .sous-titre {
-    @apply text-xs font-bold tracking-wide text-brand;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--color-brand);
+    letter-spacing: 0.04em;
   }
-  /* Les lignes en majuscules espacées */
+
+  /* Texte en majuscules espacées */
   .texte-maj {
-    @apply text-xs font-semibold uppercase leading-7 tracking-[0.09em];
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.8;
   }
-  /* Le numéro de section : "01", "02" */
+
+  /* Grand numéro décoratif de section : 01, 02... */
   .numero {
-    @apply font-titre text-4xl leading-none text-brand;
+    font-family: var(--font-titre);
+    font-weight: 500;
+    color: var(--color-brand);
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  /* Le bouton : rectangle, majuscules espacées, léger soulèvement au survol */
+  .bouton {
+    display: inline-block;
+    padding: 17px 30px;
+    background: var(--color-brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: center;
+    box-shadow: 0 6px 14px rgba(11, 42, 91, 0.22);
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+  .bouton:hover {
+    transform: translateY(-2px);
+    background: var(--color-marine);
+  }
+  /* Un bouton désactivé ne bouge pas */
+  .bouton:disabled:hover {
+    transform: none;
+    background: var(--color-brand);
+  }
+
+  /* Variante crème, pour les blocs marine */
+  .bouton-creme {
+    background: var(--color-creme);
+    color: var(--color-marine);
+  }
+  .bouton-creme:hover {
+    background: #fff;
+  }
+
+  /* Variante plus compacte, pour l'en-tête */
+  .bouton-petit {
+    padding: 14px 24px;
+  }
+
+  /* Bouton secondaire : contour marine, fond transparent */
+  .bouton-contour {
+    display: inline-block;
+    padding: 15px 28px;
+    border: 1px solid var(--color-marine);
+    color: var(--color-marine);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: center;
+    transition: background 0.25s ease;
+  }
+  .bouton-contour:hover {
+    background: var(--color-ciel);
+  }
+  .bouton-contour:disabled {
+    opacity: 0.5;
+  }
+
+  /* Lien de navigation : majuscules, trait fin au survol et sur la page active.
+     NavLink (React Router) ajoute tout seul la classe "active" sur la page courante. */
+  .lien-nav {
+    padding: 6px 2px;
+    border-bottom: 1px solid transparent;
+    color: var(--color-marine);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    transition: border-color 0.2s ease;
+  }
+  .lien-nav:hover,
+  .lien-nav.active {
+    border-color: var(--color-marine);
+  }
+
+  /* Lien souligné (conservé au cas où) */
+  .lien-pied {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: opacity 0.2s ease;
+  }
+  .lien-pied:hover {
+    opacity: 0.7;
   }
 }
 
-/* Animation d'apparition de la maquette : le texte monte en fondu.
-   Elle n'est activée que si la personne n'a pas demandé de réduire les animations
-   dans son système (accessibilité). */
+/* ===== Animation d'apparition : le texte monte en fondu ===== */
 @keyframes apparition {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
+/* Activée seulement si la personne n'a pas demandé de réduire les animations (accessibilité) */
 @media (prefers-reduced-motion: no-preference) {
   .apparition {
-    /* "both" : l'élément reste invisible pendant le délai, puis reste affiché à la fin */
+    /* "both" : invisible pendant le délai, puis reste affiché à la fin */
     animation: apparition 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  /* Un clic sur un lien d'ancre fait glisser la page au lieu de sauter */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Respecter « réduire les animations » pour les boutons et les liens */
+@media (prefers-reduced-motion: reduce) {
+  .bouton,
+  .bouton-contour,
+  .lien-nav,
+  .lien-pied {
+    transition: none;
+  }
+  .bouton:hover {
+    transform: none;
   }
 }

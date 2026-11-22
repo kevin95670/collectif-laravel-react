@@ -132,7 +132,7 @@ export default function BoutonNotifications() {
       </button>
 
       {ouvert && (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-3rem)] border border-line bg-white shadow-carte">
+        <div className="fixed inset-x-3 top-[68px] z-50 border border-line bg-white shadow-carte md:absolute md:inset-x-auto md:right-0 md:top-auto md:mt-2 md:w-80">
           <div className="flex items-center justify-between border-b border-line px-5 py-3">
             <span className="text-sm font-bold text-marine">Notifications</span>
             {nombreNonLues > 0 && (

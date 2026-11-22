@@ -36,10 +36,15 @@ export default function PageCreationEvenement() {
   }
 
   return (
-    <div className="mx-auto max-w-xl px-10 py-16">
+    <div className="mx-auto max-w-3xl px-6 py-16 md:px-10">
       <div className="text-center">
-        <div className="sous-titre">- nouvel événement -</div>
-        <h1 className="mt-4 text-5xl">Créer un événement</h1>
+        <div className="sous-titre apparition">- nouvel événement -</div>
+        <h1 className="apparition mt-4 text-5xl leading-[1.05] md:text-6xl" style={{ animationDelay: "0.15s" }}>
+          Créer un événement
+        </h1>
+        <p className="texte-maj apparition mx-auto mt-5 max-w-md text-xs" style={{ animationDelay: "0.3s" }}>
+          Un titre, un lieu, une date et un nombre de places : ton événement est en ligne tout de suite.
+        </p>
       </div>
 
       <FormulaireEvenement

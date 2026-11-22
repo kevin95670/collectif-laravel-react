@@ -18,7 +18,7 @@ class AuthentificationController extends Controller
         $donnees_validees = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'], // unique dans la table users
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8','confirmed'],
         ]);
 
         // Le mot de passe est haché automatiquement : le modèle User le déclare

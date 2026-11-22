@@ -39,3 +39,11 @@ export function formaterDepuis(dateIso) {
   if (secondes < 86400) return "il y a " + Math.floor(secondes / 3600) + " h";
   return "il y a " + Math.floor(secondes / 86400) + " j";
 }
+
+// "2026-11-21T19:00:00Z" devient "sam. 21 nov. · 20:00" (heure locale du navigateur)
+export function formaterDateCourte(dateTexte) {
+  const date = new Date(dateTexte);
+  const jour = date.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  const heure = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  return jour + " · " + heure;
+}
