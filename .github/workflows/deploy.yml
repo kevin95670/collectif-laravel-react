@@ -90,10 +90,18 @@ jobs:
           ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Envoyer les fichiers sur Hostinger
-        run: |
-          rsync -az --delete \
-            -e "ssh -p $SSH_PORT -i ~/.ssh/cle_deploiement" \
-            --exclude='/.env' \
-            --exclude='/storage/logs/*' \
-            --exclude='/storage/framework/sessions/*' \
-            --exclude='/storage/framework/cache/*' \
+        # Le signe ">-" assemble les lignes suivantes en une seule commande :
+        # plus besoin de "\" en fin de ligne
+        run: >-
+          rsync -az --delete
+          -e "ssh -p $SSH_PORT -i ~/.ssh/cle_deploiement"
+          --exclude='/.env'
+          --exclude='/storage/logs/*'
+          --exclude='/storage/framework/sessions/*'
+          --exclude='/storage/framework/cache/*'
+          --exclude='/storage/framework/views/*'
+          --exclude='/storage/app/public/*'
+          --exclude='/public/storage'
+          --exclude='/bootstrap/cache/*.php'
+          --exclude='/node_modules'
+          backend/ "$SSH_USER@$SSH_HOST:$DOSSIER_SERVEUR/"
