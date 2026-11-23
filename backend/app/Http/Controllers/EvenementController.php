@@ -21,10 +21,7 @@ use App\Notifications\NouveauParticipant;
 class EvenementController extends Controller
 {
     // Renvoie la liste des événements à venir.
-    // "index" est le nom d'usage de Laravel pour une action "lister" : ce n'est pas obligatoire,
-    // mais tout le monde l'utilise, donc on le garde.
     // GET /api/evenements?sport=football&ville=Lyon&date=2026-12-05
-    // Tous les filtres sont facultatifs : sans paramètre, on renvoie tout.
     public function index(Request $requete): JsonResponse
     {
         $requete_evenements = Evenement::query()
@@ -35,7 +32,6 @@ class EvenementController extends Controller
             ->orderBy('date_debut');
 
         // when(valeur, fonction) : la fonction ne s'exécute que si la valeur n'est pas vide.
-        // Ça évite une cascade de "if" pour chaque filtre.
         // $requete->query('sport') lit le paramètre ?sport=... de l'URL.
         $requete_evenements->when(
             $requete->query('sport'),
@@ -70,9 +66,6 @@ class EvenementController extends Controller
     }
     
     // GET /api/evenements/{evenement}
-    // "Evenement $evenement" : Laravel lit l'id dans l'URL, va chercher l'événement
-    // et renvoie une erreur 404 s'il n'existe pas ("route model binding", comme MapEntity en Symfony).
-    // Le nom de la variable doit être le même que {evenement} dans la route.
     public function afficher(Request $requete, Evenement $evenement): JsonResponse
     {
         // Route publique : on ne passe pas par auth:sanctum, donc on demande
@@ -87,7 +80,6 @@ class EvenementController extends Controller
     {
         $utilisateur = $requete->user();
 
-        // La transaction regroupe les vérifications ET l'inscription : tout ou rien.
         // La fonction renvoie un message d'erreur, ou null si l'inscription a réussi.
         $message_erreur = DB::transaction(function () use ($evenement, $utilisateur) {
 
