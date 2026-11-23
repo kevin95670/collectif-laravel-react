@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ApercuPartageController;
+
+
+Route::get('/evenements/{identifiant}', [ApercuPartageController::class, 'afficher']);
 
 // Toute adresse qui ne correspond à aucune autre route est une page du site React
 // (/evenements, /profil, /sports/football...). On renvoie le fichier du site :
