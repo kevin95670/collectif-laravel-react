@@ -22,7 +22,6 @@ export default function EnTete() {
     naviguer("/");
   }
 
-  // Style commun des lignes du panneau mobile
   const classesLigneMobile = "block w-full border-b border-line py-3 text-left text-sm font-semibold text-marine";
 
   return (
