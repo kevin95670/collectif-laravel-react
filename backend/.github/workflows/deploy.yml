@@ -1,0 +1,99 @@
+name: Déploiement
+
+# Se déclenche à chaque push sur master, ou à la main depuis l'onglet Actions
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Un seul déploiement à la fois
+concurrency:
+  group: deploiement
+  cancel-in-progress: false
+
+jobs:
+  # ---------- Étape 1 : les tests. Si un test échoue, rien n'est déployé ----------
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, curl, fileinfo
+          coverage: none
+
+      - name: Installer les dépendances PHP
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Préparer l'environnement de test
+        working-directory: backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Lancer les tests
+        working-directory: backend
+        env:
+          FRONTEND_URL: http://localhost:5173
+          SANCTUM_STATEFUL_DOMAINS: localhost:5173
+        run: php artisan test
+
+  # ---------- Étape 2 : construire et envoyer sur Hostinger ----------
+  deploiement:
+    needs: tests
+    runs-on: ubuntu-latest
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      DOSSIER_SERVEUR: domains/collectif.kevinleonard.fr/laravel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Construire le site React
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring
+          coverage: none
+
+      - name: Installer les dépendances PHP (sans les outils de développement)
+        working-directory: backend
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Mettre le site React dans le dossier public de Laravel
+        run: |
+          cp -r frontend/dist/. backend/public/
+          mv backend/public/index.html backend/public/app.html
+
+      - name: Préparer la connexion SSH
+        env:
+          CLE_PRIVEE: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$CLE_PRIVEE" | tr -d '\r' > ~/.ssh/cle_deploiement
+          chmod 600 ~/.ssh/cle_deploiement
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Envoyer les fichiers sur Hostinger
+        run: |
+          rsync -az --delete \
+            -e "ssh -p $SSH_PORT -i ~/.ssh/cle_deploiement" \
+            --exclude='/.env' \
+            --exclude='/storage/logs/*' \
+            --exclude='/storage/framework/sessions/*' \
+            --exclude='/storage/framework/cache/*' \
