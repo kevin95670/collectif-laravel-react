@@ -44,6 +44,9 @@ export default function PageConnexion() {
             valeur={email} auChangement={setEmail} erreurs={erreurs.email} />
           <ChampFormulaire id="connexion-mot-de-passe" libelle="Mot de passe" type="password"
             valeur={motDePasse} auChangement={setMotDePasse} erreurs={erreurs.password} />
+          <p className="mt-3 text-right text-xs">
+            <Link to="/mot-de-passe-oublie" className="font-bold text-brand hover:underline">Mot de passe oublié ?</Link>
+          </p>
 
           <button type="submit" disabled={envoiEnCours} className="bouton mt-8 w-full disabled:opacity-50">
             {envoiEnCours ? "Connexion..." : "Se connecter"}

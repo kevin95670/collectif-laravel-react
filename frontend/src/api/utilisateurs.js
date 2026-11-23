@@ -25,3 +25,13 @@ export const modifierProfil = (donnees) => appelerApi("/api/profil", { method: "
 
 // PUT /api/profil/mot-de-passe -> ProfilController@modifier_mot_de_passe
 export const modifierMotDePasse = (donnees) => appelerApi("/api/profil/mot-de-passe", { method: "PUT", donnees });
+
+// POST /api/mot-de-passe-oublie : Laravel envoie l'e-mail avec le lien
+export function demanderLienReinitialisation(email) {
+  return appelerApi("/api/mot-de-passe-oublie", { method: "POST", donnees: { email } });
+}
+
+// POST /api/reinitialisation-mot-de-passe : donnees = { token, email, password, password_confirmation }
+export function reinitialiserMotDePasse(donnees) {
+  return appelerApi("/api/reinitialisation-mot-de-passe", { method: "POST", donnees });
+}

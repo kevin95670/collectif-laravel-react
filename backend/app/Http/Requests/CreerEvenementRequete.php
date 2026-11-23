@@ -32,4 +32,14 @@ class CreerEvenementRequete extends FormRequest
             'ville' => 'required|string|max:100',
         ];
     }
+
+    // Des messages sur mesure pour les règles dont le texte par défaut serait maladroit.
+    // La clé est "champ.règle". ModifierEvenementRequete hérite de cette méthode.
+    public function messages(): array
+    {
+        return [
+            'date_debut.after' => 'La date de début doit être dans le futur.',
+            'date_fin.after' => 'La date de fin doit être après la date de début.',
+        ];
+    }
 }

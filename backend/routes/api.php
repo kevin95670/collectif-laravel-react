@@ -4,15 +4,21 @@ use App\Http\Controllers\AuthentificationController;
 use App\Http\Controllers\EvenementController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\MotDePasseOublieController;
+use App\Http\Controllers\OrganisateurController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
 
 // ----- Routes publiques -----
 Route::post('/inscription', [AuthentificationController::class, 'inscrire']);
 Route::post('/connexion', [AuthentificationController::class, 'connecter']);
+// Mot de passe oublié. throttle:5,1 : 5 essais par minute maximum (contre les abus)
+Route::post('/mot-de-passe-oublie', [MotDePasseOublieController::class, 'envoyer_lien'])->middleware('throttle:5,1');
+Route::post('/reinitialisation-mot-de-passe', [MotDePasseOublieController::class, 'reinitialiser'])->middleware('throttle:5,1');
 
 Route::get('/evenements', [EvenementController::class, 'index']);
 Route::get('/sports', [EvenementController::class, 'compter_evenements_par_sport']);
+Route::get('/organisateurs/{organisateur}', [OrganisateurController::class, 'afficher']);
 Route::get('/evenements/{evenement}', [EvenementController::class, 'afficher']);
 
 // ----- Routes réservées aux personnes connectées -----

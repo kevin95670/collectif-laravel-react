@@ -29,6 +29,8 @@ services:
       APP_URL: http://localhost:8000          # adresse de l'API
       FRONTEND_URL: http://localhost:5173     # adresse du front React
       APP_TIMEZONE: Europe/Paris
+      APP_LOCALE: fr
+      APP_FALLBACK_LOCALE: fr   # si une phrase n'est pas traduite, on retombe aussi sur le français
 
       # Base de données : "mysql" est le NOM du service plus bas.
       # (À l'intérieur d'un conteneur, "localhost" ne marcherait pas.)

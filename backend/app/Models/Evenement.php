@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Services\GeocodageAdresse;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Evenement extends Model
 {
+
+    use HasFactory;
    
     // Liste des sports acceptés. self::LISTE_DES_SPORTS ou Evenement::LISTE_DES_SPORTS pour la lire.
     public const LISTE_DES_SPORTS = [

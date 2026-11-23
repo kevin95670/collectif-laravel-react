@@ -12,6 +12,10 @@ import PageMesEvenements from "./pages/PageMesEvenements";
 import PageModificationEvenement from "./pages/PageModificationEvenement";
 import PageProfil from "./pages/PageProfil";
 import PagePasTrouvee from "./pages/PagePasTrouvee";
+import PageMotDePasseOublie from "./pages/PageMotDePasseOublie";
+import PageReinitialisation from "./pages/PageReinitialisation";
+import PageSport from "./pages/PageSport";
+import PageOrganisateur from "./pages/PageOrganisateur";
 
 export default function App() {
   return (
@@ -56,6 +60,10 @@ export default function App() {
               </RouteProtegee>
             }
           />
+          <Route path="/sports/:sport" element={<PageSport />} />
+          <Route path="/organisateurs/:id" element={<PageOrganisateur />} />
+          <Route path="/mot-de-passe-oublie" element={<PageMotDePasseOublie />} />
+          <Route path="/reinitialisation-mot-de-passe" element={<PageReinitialisation />} />
           <Route path="*" element={<PagePasTrouvee />} />
         </Routes>
       </main>

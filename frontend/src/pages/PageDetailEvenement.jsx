@@ -142,7 +142,10 @@ export default function PageDetailEvenement() {
           {evenement.titre}
         </h1>
         <p className="apparition mt-4 text-sm text-gris" style={{ animationDelay: "0.3s" }}>
-          Organisé par {evenement.organisateur.name}
+          Organisé par{" "}
+          <Link to={"/organisateurs/" + evenement.organisateur_id} className="font-bold text-brand hover:underline">
+            {evenement.organisateur.name}
+          </Link>
         </p>
         {etiquetteStatut && (
           <p className="mt-4">

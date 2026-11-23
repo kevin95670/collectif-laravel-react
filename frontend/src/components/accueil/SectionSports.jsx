@@ -47,7 +47,7 @@ export default function SectionSports() {
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {sportsPopulaires.map((sport) => (
             // Le lien ouvre la recherche déjà filtrée sur ce sport : /evenements?sport=football
-            <Link key={sport.sport} to={"/evenements?sport=" + sport.sport} className="group block text-center">
+            <Link key={sport.sport} to={"/sports/" + sport.sport} className="group block text-center">
               <div className="overflow-hidden">
                 {/* group-hover : l'image s'agrandit quand on survole la carte entière */}
                 <ZonePhotoDecorative
