@@ -3,6 +3,7 @@ import ChampFormulaire from "./ChampFormulaire";
 import ChampSelection from "./ChampSelection";
 import PhotoEvenement from "./PhotoEvenement";
 import { LISTE_DES_SPORTS } from "../constantes/sports";
+import ChampAdresse from "./ChampAdresse";
 
 // Le titre numéroté d'une rubrique du formulaire : "01  L'événement"
 function TitreRubrique({ numero, texte, premiere = false }) {
@@ -96,9 +97,17 @@ export default function FormulaireEvenement({ valeursInitiales, photoActuelleUrl
         <TitreRubrique numero="02" texte="Le lieu" />
         {/* Deux colonnes dès la taille tablette. Chaque champ est dans un <div> pour que les marges s'alignent. */}
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
-          <div>
-            <ChampFormulaire id="adresse" libelle="Adresse" valeur={adresse} auChangement={setAdresse} erreurs={erreurs.adresse} />
-          </div>
+            <ChampAdresse
+              id="adresse"
+              libelle="Adresse"
+              valeur={adresse}
+              auChangement={setAdresse}
+              auChoix={(choix) => {
+                setAdresse(choix.adresse);
+                setVille(choix.ville);
+              }}
+              erreurs={erreurs.adresse}
+            />
           <div>
             <ChampFormulaire id="ville" libelle="Ville" valeur={ville} auChangement={setVille} erreurs={erreurs.ville} />
           </div>
