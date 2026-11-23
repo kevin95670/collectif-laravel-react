@@ -8,17 +8,19 @@ C'est un projet personnel de démonstration : une API **Laravel** et un site **R
 
 **Site en ligne : https://collectif.kevinleonard.fr**
 
-Pour essayer sans créer de compte : `demo@collectif.test` / `demo-collectif`. Vous pouvez aussi vous inscrire avec n'importe quelle adresse : c'est un site de démonstration, n'y saisissez pas de vraies données.
+Pour essayer sans créer de compte : `demo@collectif.test` / `demo-collectif` (ce compte peut, par exemple, laisser un avis sur « Basket du jeudi au gymnase Japy »). Vous pouvez aussi vous inscrire avec n'importe quelle adresse : c'est un site de démonstration, n'y saisissez pas de vraies données.
 
 ## Ce que fait le site
 
 - **Comptes** : inscription, connexion, déconnexion, modification du profil et du mot de passe, mot de passe oublié par e-mail.
-- **Événements** : création, modification, annulation (réservées à l'organisateur), photo de couverture, recherche par sport, ville et date.
+- **Événements** : création, modification, annulation (réservées à l'organisateur), photo de couverture. La recherche (sport, ville, date) est paginée et ses filtres sont conservés dans l'adresse de la page : un résultat peut se partager par lien. La ville se saisit avec une autocomplétion d'adresse, et le bouton « Près de moi » trie les événements par distance grâce à la géolocalisation du navigateur.
 - **Inscriptions** : rejoindre ou quitter un événement, avec un nombre de places maximum. Deux personnes qui cliquent en même temps sur la dernière place ne la prennent pas toutes les deux (verrou en base de données).
+- **Favoris** : un cœur sur chaque événement et une page « Mes favoris ». Si une place se libère sur un événement complet que vous suivez, vous êtes prévenu.
+- **Avis** : après un événement, les participants notent l'organisateur (de 1 à 5 étoiles, un seul avis par personne). La moyenne s'affiche sur la page de l'organisateur.
 - **Chat par événement**, réservé à l'organisateur et aux inscrits, avec messages cités.
-- **Notifications** : une cloche dans l'en-tête (nouveau participant, nouveaux messages, événement modifié ou annulé) et des e-mails pour les modifications et annulations.
+- **Notifications** : une cloche dans l'en-tête (nouveau participant, nouveaux messages, événement modifié ou annulé, place libérée) et des e-mails pour les modifications, annulations et places libérées.
 - **Carte** du lieu : l'adresse est convertie en coordonnées par l'API Adresse du gouvernement, puis affichée avec Leaflet et OpenStreetMap.
-- **Pages publiques** par sport et par organisateur (sans jamais exposer l'adresse e-mail).
+- **Pages publiques** par sport et par organisateur (sans jamais exposer l'adresse e-mail), avec un aperçu soigné (titre, description, photo) quand un événement est partagé dans une messagerie ou un réseau social.
 - **Interface responsive**, du téléphone à l'ordinateur.
 
 ## Technologies
@@ -29,7 +31,7 @@ Pour essayer sans créer de compte : `demo@collectif.test` / `demo-collectif`. V
 | Site | React, Vite, React Router, Tailwind CSS 4, Leaflet |
 | Base de données | MySQL 8.4 |
 | Développement | Docker Compose (PHP-FPM, nginx, MySQL, Redis, Mailpit, Vite) |
-| Tests | PHPUnit : 35 tests de bout en bout sur l'API |
+| Tests | PHPUnit : 79 tests de bout en bout sur l'API |
 | Mise en ligne | GitHub Actions, déploiement par SSH et `rsync` sur un hébergement mutualisé |
 
 ## Architecture
@@ -80,7 +82,7 @@ docker compose exec php php artisan db:seed --class=EvenementsDemoSeeder
 docker compose exec php php artisan test
 ```
 
-Les tests tournent sur une base SQLite en mémoire : ils ne touchent jamais à la base de développement, et un garde-fou refuse de démarrer si une autre base est configurée. Ils couvrent l'authentification, les événements, les inscriptions et les places, le chat, la réinitialisation du mot de passe, la page d'un organisateur et le géocodage (avec l'API externe simulée).
+Les tests tournent sur une base SQLite en mémoire : ils ne touchent jamais à la base de développement, et un garde-fou refuse de démarrer si une autre base est configurée. Ils couvrent l'authentification, les événements, les inscriptions et les places, le chat, la réinitialisation du mot de passe, la pagination, la recherche par proximité, les favoris et la notification de place libérée, les avis, l'envoi de photo, l'aperçu du partage, la page d'un organisateur et le géocodage (avec l'API externe simulée).
 
 ## Déploiement
 
