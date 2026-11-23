@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
-/* ===== Le thème : couleurs, polices, ombre =====
-   Chaque valeur devient des classes : --color-marine donne bg-marine, text-marine, border-marine... */
+/* ===== Le thème : couleurs, polices, ombre ===== */
 @theme {
   --color-marine: #0B2A5B;
   --color-brand: #0B57A8;
@@ -24,7 +23,6 @@
     background: var(--color-creme);
   }
 
-  /* Tous les titres : Cormorant Unicase en bleu marine. La taille vient des classes (text-5xl...). */
   h1,
   h2,
   h3 {
@@ -35,7 +33,6 @@
     line-height: 1.12;
   }
 
-  /* Le contour de focus : visible quand on navigue au clavier (accessibilité) */
   a:focus-visible,
   button:focus-visible,
   input:focus-visible,
@@ -48,7 +45,6 @@
 
 /* ===== Les composants récurrents ===== */
 @layer components {
-  /* Sous-titre de section : "- comment ça marche -" */
   .sous-titre {
     font-weight: 700;
     font-size: 12px;
@@ -56,7 +52,6 @@
     letter-spacing: 0.04em;
   }
 
-  /* Texte en majuscules espacées */
   .texte-maj {
     text-transform: uppercase;
     letter-spacing: 0.09em;
@@ -65,7 +60,6 @@
     line-height: 1.8;
   }
 
-  /* Grand numéro décoratif de section : 01, 02... */
   .numero {
     font-family: var(--font-titre);
     font-weight: 500;
@@ -74,7 +68,6 @@
     line-height: 1;
   }
 
-  /* Le bouton : rectangle, majuscules espacées, léger soulèvement au survol */
   .bouton {
     display: inline-block;
     padding: 17px 30px;
@@ -92,13 +85,12 @@
     transform: translateY(-2px);
     background: var(--color-marine);
   }
-  /* Un bouton désactivé ne bouge pas */
+
   .bouton:disabled:hover {
     transform: none;
     background: var(--color-brand);
   }
 
-  /* Variante crème, pour les blocs marine */
   .bouton-creme {
     background: var(--color-creme);
     color: var(--color-marine);
@@ -107,12 +99,10 @@
     background: #fff;
   }
 
-  /* Variante plus compacte, pour l'en-tête */
   .bouton-petit {
     padding: 14px 24px;
   }
 
-  /* Bouton secondaire : contour marine, fond transparent */
   .bouton-contour {
     display: inline-block;
     padding: 15px 28px;
@@ -132,8 +122,6 @@
     opacity: 0.5;
   }
 
-  /* Lien de navigation : majuscules, trait fin au survol et sur la page active.
-     NavLink (React Router) ajoute tout seul la classe "active" sur la page courante. */
   .lien-nav {
     padding: 6px 2px;
     border-bottom: 1px solid transparent;
@@ -149,7 +137,6 @@
     border-color: var(--color-marine);
   }
 
-  /* Lien souligné (conservé au cas où) */
   .lien-pied {
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -160,7 +147,6 @@
   }
 }
 
-/* ===== Animation d'apparition : le texte monte en fondu ===== */
 @keyframes apparition {
   from {
     opacity: 0;
@@ -172,20 +158,16 @@
   }
 }
 
-/* Activée seulement si la personne n'a pas demandé de réduire les animations (accessibilité) */
 @media (prefers-reduced-motion: no-preference) {
   .apparition {
-    /* "both" : invisible pendant le délai, puis reste affiché à la fin */
     animation: apparition 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
-  /* Un clic sur un lien d'ancre fait glisser la page au lieu de sauter */
   html {
     scroll-behavior: smooth;
   }
 }
 
-/* Respecter « réduire les animations » pour les boutons et les liens */
 @media (prefers-reduced-motion: reduce) {
   .bouton,
   .bouton-contour,

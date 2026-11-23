@@ -20,8 +20,6 @@ import BandeauDemonstration from "./components/BandeauDemonstration";
 
 export default function App() {
   return (
-    // Colonne sur toute la hauteur : l'en-tête en haut, le pied de page en bas,
-    // et "flex-1" fait grandir le contenu pour pousser le pied de page vers le bas.
     <div className="flex min-h-screen flex-col bg-creme">
       <EnTete />
 
