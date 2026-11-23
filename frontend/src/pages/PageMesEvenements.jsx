@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import GrilleEvenements from "../components/GrilleEvenements";
 import { recupererMesEvenements } from "../api/evenements";
+import { recupererMesFavoris } from "../api/favoris";
 
 // Un titre numéroté + une grille de cartes, ou un message si la liste est vide.
-// Il sert deux fois dans la page : un composant évite de dupliquer le code.
-function SectionEvenements({ numero, titre, evenements, messageVide, libelleLien, destinationLien }) {
+// Il sert trois fois dans la page : un composant évite de dupliquer le code.
+function SectionEvenements({ numero, titre, evenements, messageVide, libelleLien, destinationLien, auChangementFavori }) {
   return (
     <section className="mt-14 first:mt-0">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line pb-3">
@@ -23,7 +24,7 @@ function SectionEvenements({ numero, titre, evenements, messageVide, libelleLien
         </div>
       ) : (
         <div className="mt-6">
-          <GrilleEvenements evenements={evenements} />
+          <GrilleEvenements evenements={evenements} auChangementFavori={auChangementFavori} />
         </div>
       )}
     </section>
@@ -33,18 +34,28 @@ function SectionEvenements({ numero, titre, evenements, messageVide, libelleLien
 export default function PageMesEvenements() {
   const [evenementsOrganises, setEvenementsOrganises] = useState([]);
   const [evenementsInscrits, setEvenementsInscrits] = useState([]);
+  const [evenementsFavoris, setEvenementsFavoris] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
 
   useEffect(() => {
-    recupererMesEvenements()
-      .then((donnees) => {
+    // Promise.all : les deux appels partent en même temps, et on attend les deux réponses
+    Promise.all([recupererMesEvenements(), recupererMesFavoris()])
+      .then(([donnees, favoris]) => {
         setEvenementsOrganises(donnees.organises);
         setEvenementsInscrits(donnees.inscrits);
+        setEvenementsFavoris(favoris);
       })
       .catch(() => setErreur("Impossible de charger tes événements."))
       .finally(() => setChargement(false));
   }, []);
+
+  // Un cœur décoché dans la liste des favoris : la carte disparaît
+  function quandUnFavoriChange(evenementId, estFavori) {
+    if (!estFavori) {
+      setEvenementsFavoris((liste) => liste.filter((evenement) => evenement.id !== evenementId));
+    }
+  }
 
   return (
     <>
@@ -76,6 +87,15 @@ export default function PageMesEvenements() {
               messageVide="Tu n'as pas encore créé d'événement."
               libelleLien="Créer un événement"
               destinationLien="/evenements/creer"
+            />
+            <SectionEvenements
+              numero="03"
+              titre="Mes favoris"
+              evenements={evenementsFavoris}
+              messageVide="Aucun favori. Clique sur le cœur d'un événement pour le retrouver ici."
+              libelleLien="Trouver un événement"
+              destinationLien="/evenements"
+              auChangementFavori={quandUnFavoriChange}
             />
           </>
         )}

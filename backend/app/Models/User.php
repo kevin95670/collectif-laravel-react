@@ -46,4 +46,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Evenement::class, 'inscriptions', 'user_id', 'evenement_id')
             ->withTimestamps();
     }
+
+    // Les événements que la personne a mis en favori (table "favoris")
+    public function evenements_favoris(): BelongsToMany
+    {
+        return $this->belongsToMany(Evenement::class, 'favoris', 'user_id', 'evenement_id')
+            ->withTimestamps();
+    }
 }

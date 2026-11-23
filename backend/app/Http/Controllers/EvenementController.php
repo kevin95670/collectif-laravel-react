@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\NouveauParticipant;
+use App\Notifications\PlaceLiberee;
 
 class EvenementController extends Controller
 {
@@ -107,6 +108,19 @@ class EvenementController extends Controller
                         $evenement->latitude, $evenement->longitude
                     ), 1);
             }
+        }
+
+        // Pour chaque événement de la page : est-il dans les favoris de la personne connectée ?
+        // Une seule requête pour toute la page (et non une par événement).
+        $utilisateur = $requete->user('sanctum');
+        $identifiants_favoris = $utilisateur
+            ? $utilisateur->evenements_favoris()
+                ->whereIn('evenements.id', collect($evenements_de_la_page)->pluck('id'))
+                ->pluck('evenements.id')
+            : collect();
+
+        foreach ($evenements_de_la_page as $evenement) {
+            $evenement->est_favori = $identifiants_favoris->contains($evenement->id);
         }
 
         return response()->json([
@@ -207,12 +221,22 @@ class EvenementController extends Controller
     }
 
     // DELETE /api/evenements/{evenement}/inscription
+    // DELETE /api/evenements/{evenement}/inscription
     public function quitter(Request $requete, Evenement $evenement): JsonResponse
     {
         $utilisateur = $requete->user();
 
+        // On note l'état AVANT le départ : c'est le passage de "complet" à "plus complet" qui compte
+        $etait_complet = $this->est_complet($evenement);
+        $etait_inscrit = $evenement->participants()->where('users.id', $utilisateur->id)->exists();
+
         // detach() supprime la ligne de la table "inscriptions" (sans erreur si elle n'existe pas)
         $evenement->participants()->detach($utilisateur->id);
+
+        // Quelqu'un qui n'était pas inscrit ne libère aucune place
+        if ($etait_complet && $etait_inscrit) {
+            $this->prevenir_favoris_place_liberee($evenement, $utilisateur->id);
+        }
 
         return response()->json($this->construire_detail_evenement($evenement, $utilisateur));
     }
@@ -233,6 +257,8 @@ class EvenementController extends Controller
             'nombre_places_restantes' => max(0, $evenement->nombre_places_max - $nombre_de_participants),
             'utilisateur_est_inscrit' => $utilisateur !== null
                 && $evenement->participants->contains('id', $utilisateur->id),
+            'est_favori' => $utilisateur !== null
+                && $utilisateur->evenements_favoris()->where('evenements.id', $evenement->id)->exists(),
         ];
     }
 
@@ -262,6 +288,9 @@ class EvenementController extends Controller
     // PUT /api/evenements/{evenement}
     public function modifier(ModifierEvenementRequete $requete, Evenement $evenement): JsonResponse
     {
+        // État avant la modification : on le compare à l'état d'après
+        $etait_complet = $this->est_complet($evenement);
+
         $evenement->update($requete->validated());
 
         // Seules ces modifications méritent d'avertir les participants
@@ -278,6 +307,11 @@ class EvenementController extends Controller
                 $this->recuperer_participants_a_prevenir($evenement),
                 new EvenementModifie($evenement, $champs_modifies)
             );
+        }
+
+        // Plus de places : l'événement n'est plus complet, les favoris peuvent en profiter
+        if ($etait_complet && ! $this->est_complet($evenement)) {
+            $this->prevenir_favoris_place_liberee($evenement);
         }
 
         return response()->json($this->construire_detail_evenement($evenement, $requete->user()));
@@ -304,6 +338,31 @@ class EvenementController extends Controller
         return $evenement->participants()
             ->where('users.id', '!=', $evenement->organisateur_id)
             ->get();
+    }
+
+        // Toutes les places sont-elles prises ?
+    private function est_complet(Evenement $evenement): bool
+    {
+        return $evenement->participants()->count() >= $evenement->nombre_places_max;
+    }
+
+    // Prévient les personnes qui ont l'événement en favori qu'une place s'est libérée.
+    // $utilisateur_exclu : la personne qui vient de partir (inutile de la prévenir de son propre départ).
+    private function prevenir_favoris_place_liberee(Evenement $evenement, ?int $utilisateur_exclu = null): void
+    {
+        // Rien à proposer pour un événement annulé ou déjà commencé
+        if ($evenement->est_annule || $evenement->date_debut->isPast()) {
+            return;
+        }
+
+        $destinataires = $evenement->utilisateurs_favoris()
+            ->where('users.id', '!=', $evenement->organisateur_id)
+            // whereDoesntHave : on écarte ceux qui sont déjà inscrits (ils ont déjà leur place)
+            ->whereDoesntHave('evenements_inscrits', fn ($requete_sql) => $requete_sql->where('evenements.id', $evenement->id))
+            ->when($utilisateur_exclu, fn ($requete_sql, $identifiant) => $requete_sql->where('users.id', '!=', $identifiant))
+            ->get();
+
+        Notification::send($destinataires, new PlaceLiberee($evenement));
     }
 
     // GET /api/sports : pour chaque sport, le nombre d'événements à venir (utilisé par l'accueil)

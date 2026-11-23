@@ -101,4 +101,11 @@ class Evenement extends Model
             return Storage::disk('public')->url($this->photo_chemin);
         });
     }
+
+    // Les personnes qui ont mis cet événement en favori (le sens inverse de User::evenements_favoris)
+    public function utilisateurs_favoris(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'favoris', 'evenement_id', 'user_id')
+            ->withTimestamps();
+    }
 }

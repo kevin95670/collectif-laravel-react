@@ -7,6 +7,7 @@ import { formaterDate } from "../utilitaires/dates";
 import ChatEvenement from "../components/ChatEvenement";
 import PhotoEvenement from "../components/PhotoEvenement";
 import MiniCarte from "../components/MiniCarte";
+import BoutonFavori from "../components/BoutonFavori";
 
 export default function PageDetailEvenement() {
   // useParams lit les parties variables de l'URL : pour "/evenements/3", id vaut "3"
@@ -80,6 +81,8 @@ export default function PageDetailEvenement() {
   const libelleSport = LISTE_DES_SPORTS.find((sport) => sport.valeur === evenement.sport)?.libelle;
   const estOrganisateur = utilisateur && utilisateur.id === evenement.organisateur_id;
   const estComplet = evenement.nombre_places_restantes === 0;
+  // Le bouton "favori" n'apparaît que pour une personne connectée, sur un événement qui n'est pas le sien et pas annulé
+  const peutMettreEnFavori = utilisateur && !estOrganisateur && !evenement.est_annule;
   // Le chat est réservé à l'organisateur et aux personnes inscrites (le serveur le vérifie aussi)
   const peutAccederAuChat = utilisateur && (estOrganisateur || evenement.utilisateur_est_inscrit);
 
@@ -211,8 +214,20 @@ export default function PageDetailEvenement() {
               <div className="h-1 bg-brand" style={{ width: pourcentageRempli + "%" }} />
             </div>
 
-            <div className="mt-6 flex flex-col gap-3">{afficherBoutonInscription()}</div>
+            <div className="mt-6 flex flex-col gap-3">
+              {afficherBoutonInscription()}
+              {peutMettreEnFavori && (
+                <BoutonFavori key={evenement.id} evenementId={evenement.id}
+                  estFavoriInitial={evenement.est_favori} avecTexte />
+              )}
+            </div>
             {messageAction && <p className="mt-3 text-sm font-bold text-brand">{messageAction}</p>}
+
+            {peutMettreEnFavori && estComplet && !evenement.utilisateur_est_inscrit && (
+              <p className="mt-3 text-xs leading-5 text-gris">
+                Mets-le en favori : tu seras prévenu si une place se libère.
+              </p>
+            )}
 
             {!estOrganisateur && !evenement.est_annule && utilisateur && (
               <p className="mt-4 text-xs leading-5 text-gris">

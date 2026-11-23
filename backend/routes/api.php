@@ -8,6 +8,7 @@ use App\Http\Controllers\MotDePasseOublieController;
 use App\Http\Controllers\OrganisateurController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\FavoriController;
 
 // ----- Routes publiques -----
 Route::post('/inscription', [AuthentificationController::class, 'inscrire']);
@@ -52,4 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Chat
     Route::get('/evenements/{evenement}/messages', [MessageController::class, 'lister']);
     Route::post('/evenements/{evenement}/messages', [MessageController::class, 'envoyer']);
+
+    // Favoris
+    Route::get('/mes-favoris', [FavoriController::class, 'lister']);
+    Route::post('/evenements/{evenement}/favori', [FavoriController::class, 'ajouter']);
+    Route::delete('/evenements/{evenement}/favori', [FavoriController::class, 'retirer']);
 });
