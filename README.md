@@ -16,7 +16,7 @@ Pour essayer sans créer de compte : `demo@collectif.test` / `demo-collectif`. V
 - **Événements** : création, modification, annulation (réservées à l'organisateur), photo de couverture, recherche par sport, ville et date.
 - **Inscriptions** : rejoindre ou quitter un événement, avec un nombre de places maximum. Deux personnes qui cliquent en même temps sur la dernière place ne la prennent pas toutes les deux (verrou en base de données).
 - **Chat par événement**, réservé à l'organisateur et aux inscrits, avec messages cités.
-- **Notifications** : une cloche dans l'en-tête et des e-mails (nouveau participant, nouveaux messages, événement modifié ou annulé).
+- **Notifications** : une cloche dans l'en-tête (nouveau participant, nouveaux messages, événement modifié ou annulé) et des e-mails pour les modifications et annulations.
 - **Carte** du lieu : l'adresse est convertie en coordonnées par l'API Adresse du gouvernement, puis affichée avec Leaflet et OpenStreetMap.
 - **Pages publiques** par sport et par organisateur (sans jamais exposer l'adresse e-mail).
 - **Interface responsive**, du téléphone à l'ordinateur.
