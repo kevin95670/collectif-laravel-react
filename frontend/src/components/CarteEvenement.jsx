@@ -1,7 +1,13 @@
 import PhotoEvenement from "./PhotoEvenement";
 
-// "inscrits" est facultatif : sans lui, on affiche seulement le nombre de places.
-export default function CarteEvenement({ titre, adresse, dateDebut, nombrePlacesMax, inscrits, annule = false, photoUrl, libelleSport }) {
+// "01,9 km" : une virgule à la française, et "moins de 1 km" en dessous du kilomètre
+function formaterDistance(distanceKm) {
+  if (distanceKm < 1) return "à moins de 1 km";
+  return "à " + distanceKm.toFixed(1).replace(".", ",") + " km";
+}
+
+// "inscrits" et "distanceKm" sont facultatifs : sans eux, on n'affiche rien de plus.
+export default function CarteEvenement({ titre, adresse, dateDebut, nombrePlacesMax, inscrits, annule = false, photoUrl, libelleSport, distanceKm }) {
   let lignePlaces = nombrePlacesMax + " places";
   if (inscrits !== undefined) {
     // "Complet" est écrit en toutes lettres : l'information ne passe pas par la seule couleur
@@ -22,6 +28,8 @@ export default function CarteEvenement({ titre, adresse, dateDebut, nombrePlaces
           <h3 className="mt-2 text-3xl leading-tight">{titre}</h3>
           <p className="mt-3 text-sm text-gris">{adresse}</p>
           <p className="mt-1 text-sm text-gris">{dateDebut}</p>
+          {/* != null : vrai pour 0, faux pour null et undefined (pas de position, ou adresse sans coordonnées) */}
+          {distanceKm != null && <p className="mt-1 text-sm font-bold text-marine">{formaterDistance(distanceKm)}</p>}
 
           {/* mt-auto : ce bloc se colle en bas de la carte, quelle que soit la longueur du titre */}
           <div className="mt-auto pt-5">

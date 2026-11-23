@@ -23,6 +23,7 @@ export default function GrilleEvenements({ evenements }) {
               annule={evenement.est_annule}
               photoUrl={evenement.photo_url}
               libelleSport={libelleDuSport(evenement.sport)}
+              distanceKm={evenement.distance_km}
             />
           </Link>
         </li>

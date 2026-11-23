@@ -66,7 +66,7 @@ class EvenementTest extends TestCase
         Evenement::factory()->passe()->create();
         Evenement::factory()->annule()->create();
 
-        $this->getJson('/api/evenements')->assertOk()->assertJsonCount(1);
+        $this->getJson('/api/evenements')->assertOk()->assertJsonCount(1,'data');
     }
 
     public function test_on_peut_filtrer_la_liste_par_sport(): void
@@ -76,8 +76,8 @@ class EvenementTest extends TestCase
 
         $this->getJson('/api/evenements?sport=running')
             ->assertOk()
-            ->assertJsonCount(1)
-            ->assertJsonPath('0.sport', 'running');
+            ->assertJsonCount(1,'data')
+            ->assertJsonPath('data.0.sport', 'running');
     }
 
     // --- Inscriptions ---

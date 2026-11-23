@@ -24,10 +24,16 @@ class EvenementController extends Controller
     // Nombre d'événements par page dans la recherche
     public const EVENEMENTS_PAR_PAGE = 6;
 
-    // Renvoie la liste des événements à venir.
-    // GET /api/evenements?sport=football&ville=Lyon&date=2026-12-05
+        // Renvoie la liste des événements à venir, une page à la fois.
+    // GET /api/evenements?sport=football&ville=Lyon&date=2026-12-05&page=2&lat=45.75&lng=4.85
     public function index(Request $requete): JsonResponse
     {
+        // La position est facultative, mais si elle est envoyée elle doit être une vraie coordonnée
+        $requete->validate([
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+        ]);
+
         $requete_evenements = Evenement::query()
             ->with('organisateur:id,name')
             ->withCount('participants')
@@ -55,16 +61,74 @@ class EvenementController extends Controller
             fn ($requete_sql, $date) => $requete_sql->whereDate('date_debut', $date)
         );
 
+        // Tri par distance : seulement si la latitude ET la longitude sont envoyées
+        $latitude_utilisateur = $requete->query('lat');
+        $longitude_utilisateur = $requete->query('lng');
+        $trier_par_distance = is_numeric($latitude_utilisateur) && is_numeric($longitude_utilisateur);
+
+        if ($trier_par_distance) {
+            $latitude_utilisateur = (float) $latitude_utilisateur;
+            $longitude_utilisateur = (float) $longitude_utilisateur;
+
+            // Un degré de longitude est plus court qu'un degré de latitude (il se resserre vers les pôles) :
+            // on le corrige avec le cosinus de la latitude de l'utilisateur.
+            $correction_longitude = cos(deg2rad($latitude_utilisateur));
+
+            // reorder() efface le tri par date ci-dessus, pour le refaire dans un autre ordre :
+            // 1. les événements sans coordonnées en dernier, 2. le plus proche d'abord, 3. puis par date.
+            // On compare des distances au carré (Pythagore sans la racine) : l'ordre est le même.
+            $requete_evenements->reorder()
+                ->orderByRaw('latitude is null')
+                ->orderByRaw(
+                    '(latitude - ?) * (latitude - ?) + ((longitude - ?) * ?) * ((longitude - ?) * ?)',
+                    [
+                        $latitude_utilisateur, $latitude_utilisateur,
+                        $longitude_utilisateur, $correction_longitude,
+                        $longitude_utilisateur, $correction_longitude,
+                    ]
+                )
+                ->orderBy('date_debut')
+                ->orderBy('id');
+        }
+
         // paginate() ne charge que les événements de la page demandée (?page=2),
         // et compte le total grâce à une seconde requête SQL.
         $page_evenements = $requete_evenements->paginate(self::EVENEMENTS_PAR_PAGE);
+        $evenements_de_la_page = $page_evenements->items();
+
+        // La distance à afficher sur les cartes : calculée en PHP, avec la vraie formule, pour la page seulement
+        if ($trier_par_distance) {
+            foreach ($evenements_de_la_page as $evenement) {
+                // Attribut ajouté à la volée : il sera dans le JSON mais pas dans la base
+                $evenement->distance_km = $evenement->latitude === null
+                    ? null
+                    : round($this->calculer_distance_km(
+                        $latitude_utilisateur, $longitude_utilisateur,
+                        $evenement->latitude, $evenement->longitude
+                    ), 1);
+            }
+        }
 
         return response()->json([
-            'data' => $page_evenements->items(),
+            'data' => $evenements_de_la_page,
             'page_courante' => $page_evenements->currentPage(),
             'derniere_page' => $page_evenements->lastPage(),
             'total' => $page_evenements->total(),
         ]);
+    }
+
+    // Distance à vol d'oiseau entre deux points, en kilomètres (formule de Haversine)
+    private function calculer_distance_km(float $latitude_a, float $longitude_a, float $latitude_b, float $longitude_b): float
+    {
+        $rayon_de_la_terre_km = 6371;
+
+        $ecart_latitude = deg2rad($latitude_b - $latitude_a);
+        $ecart_longitude = deg2rad($longitude_b - $longitude_a);
+
+        $a = sin($ecart_latitude / 2) ** 2
+            + cos(deg2rad($latitude_a)) * cos(deg2rad($latitude_b)) * sin($ecart_longitude / 2) ** 2;
+
+        return $rayon_de_la_terre_km * 2 * asin(sqrt($a));
     }
 
     public function creer(CreerEvenementRequete $requete): JsonResponse

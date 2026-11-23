@@ -27,11 +27,25 @@ export default function PageRechercheEvenements() {
   // Number(...) || 1 : si le paramètre est absent ou n'est pas un nombre, on commence à la page 1
   const [page, setPage] = useState(Number(parametresUrl.get("page")) || 1);
 
+  // Ma position : null (pas activée) ou { latitude: "45.750", longitude: "4.850" }.
+  // On garde du texte : c'est ce qu'on lit dans l'adresse et ce qu'on y écrit.
+  const [position, setPosition] = useState(() => {
+    const latitudeUrl = parametresUrl.get("lat");
+    const longitudeUrl = parametresUrl.get("lng");
+    return latitudeUrl && longitudeUrl ? { latitude: latitudeUrl, longitude: longitudeUrl } : null;
+  });
+  const [rechercheDePosition, setRechercheDePosition] = useState(false);
+  const [erreurPosition, setErreurPosition] = useState("");
+
   const [evenements, setEvenements] = useState([]);
   const [total, setTotal] = useState(0);
   const [dernierePage, setDernierePage] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
+
+  // Deux textes simples pour les dépendances des effets (un objet serait "nouveau" à chaque fois)
+  const latitude = position?.latitude ?? "";
+  const longitude = position?.longitude ?? "";
 
   // Attendre 0,4 s après la dernière lettre avant d'appliquer la ville.
   // Le "return" annule le minuteur précédent : tant qu'on tape, rien ne part.
@@ -45,18 +59,22 @@ export default function PageRechercheEvenements() {
     return () => clearTimeout(minuteur);
   }, [villeSaisie]);
 
-  // Écrire les filtres et la page dans l'adresse. "replace: true" remplace l'adresse actuelle
+  // Écrire les filtres, la position et la page dans l'adresse. "replace: true" remplace l'adresse actuelle
   // au lieu d'en ajouter une dans l'historique (sinon "page précédente" repasserait par chaque lettre).
   useEffect(() => {
     const parametres = {};
     if (sport) parametres.sport = sport;
     if (ville) parametres.ville = ville;
     if (date) parametres.date = date;
+    if (latitude && longitude) {
+      parametres.lat = latitude;
+      parametres.lng = longitude;
+    }
     if (page > 1) parametres.page = page;   // la page 1 est la page par défaut : inutile de l'écrire
     setParametresUrl(parametres, { replace: true });
-  }, [sport, ville, date, page]);
+  }, [sport, ville, date, latitude, longitude, page]);
 
-  // Dépendances [sport, ville, date, page] : React relance l'effet dès que l'une des quatre change.
+  // Dépendances : React relance l'effet dès que l'une des valeurs de la liste change.
   useEffect(() => {
     // Drapeau de sécurité : une vieille réponse, arrivée en retard, ne doit pas écraser la plus récente.
     let ignorerCetteReponse = false;
@@ -64,7 +82,7 @@ export default function PageRechercheEvenements() {
     setChargement(true);
     setErreur("");
 
-    recupererEvenements({ sport, ville, date, page })
+    recupererEvenements({ sport, ville, date, page, lat: latitude, lng: longitude })
       .then((reponse) => {
         if (ignorerCetteReponse) return;
 
@@ -88,7 +106,7 @@ export default function PageRechercheEvenements() {
     return () => {
       ignorerCetteReponse = true;
     };
-  }, [sport, ville, date, page]);
+  }, [sport, ville, date, page, latitude, longitude]);
 
   // Changer un filtre ramène à la première page : la page 3 d'une ancienne recherche n'aurait pas de sens
   function changerSport(nouveauSport) {
@@ -106,12 +124,47 @@ export default function PageRechercheEvenements() {
     window.scrollTo({ top: 0, behavior: "smooth" });   // on remonte en haut de la nouvelle liste
   }
 
+  // Le navigateur demande l'autorisation à la personne, puis appelle l'une des deux fonctions
+  function activerPosition() {
+    if (!("geolocation" in navigator)) {
+      setErreurPosition("Ton navigateur ne sait pas donner ta position.");
+      return;
+    }
+
+    setRechercheDePosition(true);
+    setErreurPosition("");
+
+    navigator.geolocation.getCurrentPosition(
+      (resultat) => {
+        // toFixed(3) : 3 décimales, soit environ 100 m. Assez précis pour trier, et l'adresse reste lisible.
+        setPosition({
+          latitude: resultat.coords.latitude.toFixed(3),
+          longitude: resultat.coords.longitude.toFixed(3),
+        });
+        setPage(1);
+        setRechercheDePosition(false);
+      },
+      () => {
+        setErreurPosition("Position indisponible. Vérifie que tu as autorisé la localisation pour ce site.");
+        setRechercheDePosition(false);
+      },
+      { timeout: 10000 }   // on abandonne au bout de 10 secondes
+    );
+  }
+
+  function desactiverPosition() {
+    setPosition(null);
+    setPage(1);
+  }
+
   function reinitialiserFiltres() {
     setSport("");
     setDate("");
     // On vide les deux valeurs de la ville : pas d'attente pour une réinitialisation
     setVilleSaisie("");
     setVille("");
+    setPosition(null);
+    setErreurPosition("");
     setPage(1);
   }
 
@@ -133,20 +186,38 @@ export default function PageRechercheEvenements() {
       <div className="mx-auto max-w-6xl px-6 py-14 md:px-10">
         {/* Filtres : cadre ciel + intérieur blanc, comme les cartes */}
         <div className="bg-ciel p-2.5 shadow-carte">
-          <div className="grid gap-4 bg-white p-6 md:grid-cols-4 md:items-end">
-            <div>
-              <ChampSelection id="filtre-sport" libelle="Sport" options={OPTIONS_SPORTS_FILTRE}
-                valeur={sport} auChangement={changerSport} />
+          <div className="bg-white p-6">
+            <div className="grid gap-4 md:grid-cols-4 md:items-end">
+              <div>
+                <ChampSelection id="filtre-sport" libelle="Sport" options={OPTIONS_SPORTS_FILTRE}
+                  valeur={sport} auChangement={changerSport} />
+              </div>
+              <div>
+                <ChampFormulaire id="filtre-ville" libelle="Ville" valeur={villeSaisie} auChangement={setVilleSaisie} />
+              </div>
+              <div>
+                <ChampFormulaire id="filtre-date" libelle="Date" type="date" valeur={date} auChangement={changerDate} />
+              </div>
+              <button type="button" onClick={reinitialiserFiltres} className="bouton-contour">
+                Réinitialiser
+              </button>
             </div>
-            <div>
-              <ChampFormulaire id="filtre-ville" libelle="Ville" valeur={villeSaisie} auChangement={setVilleSaisie} />
+
+            <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-line pt-5">
+              {position ? (
+                <button type="button" onClick={desactiverPosition} className="bouton-contour">
+                  Ne plus trier par distance
+                </button>
+              ) : (
+                <button type="button" onClick={activerPosition} disabled={rechercheDePosition}
+                  className="bouton-contour disabled:opacity-50">
+                  {rechercheDePosition ? "Recherche de ta position..." : "Près de moi"}
+                </button>
+              )}
+
+              {position && <p className="text-sm text-gris">Les événements sont triés du plus proche au plus loin.</p>}
+              {erreurPosition && <p className="text-sm font-bold text-brand">{erreurPosition}</p>}
             </div>
-            <div>
-              <ChampFormulaire id="filtre-date" libelle="Date" type="date" valeur={date} auChangement={changerDate} />
-            </div>
-            <button type="button" onClick={reinitialiserFiltres} className="bouton-contour">
-              Réinitialiser
-            </button>
           </div>
         </div>
 
