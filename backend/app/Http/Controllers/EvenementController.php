@@ -20,6 +20,10 @@ use App\Notifications\NouveauParticipant;
 
 class EvenementController extends Controller
 {
+
+    // Nombre d'événements par page dans la recherche
+    public const EVENEMENTS_PAR_PAGE = 6;
+
     // Renvoie la liste des événements à venir.
     // GET /api/evenements?sport=football&ville=Lyon&date=2026-12-05
     public function index(Request $requete): JsonResponse
@@ -29,7 +33,8 @@ class EvenementController extends Controller
             ->withCount('participants')
             ->where('est_annule', false)
             ->where('date_debut', '>=', now())
-            ->orderBy('date_debut');
+            ->orderBy('date_debut')
+            ->orderBy('id');   // départage les événements qui commencent à la même heure
 
         // when(valeur, fonction) : la fonction ne s'exécute que si la valeur n'est pas vide.
         // $requete->query('sport') lit le paramètre ?sport=... de l'URL.
@@ -50,7 +55,16 @@ class EvenementController extends Controller
             fn ($requete_sql, $date) => $requete_sql->whereDate('date_debut', $date)
         );
 
-        return response()->json($requete_evenements->get());
+        // paginate() ne charge que les événements de la page demandée (?page=2),
+        // et compte le total grâce à une seconde requête SQL.
+        $page_evenements = $requete_evenements->paginate(self::EVENEMENTS_PAR_PAGE);
+
+        return response()->json([
+            'data' => $page_evenements->items(),
+            'page_courante' => $page_evenements->currentPage(),
+            'derniere_page' => $page_evenements->lastPage(),
+            'total' => $page_evenements->total(),
+        ]);
     }
 
     public function creer(CreerEvenementRequete $requete): JsonResponse
