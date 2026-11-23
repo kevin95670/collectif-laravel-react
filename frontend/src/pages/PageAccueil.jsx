@@ -8,7 +8,6 @@ import SectionRencontres from "../components/accueil/SectionRencontres";
 import SectionTemoignages from "../components/accueil/SectionTemoignages";
 import BandeauFinal from "../components/accueil/BandeauFinal";
 
-// La page d'accueil n'est qu'un assemblage de sections : chaque morceau vit dans son fichier
 export default function PageAccueil() {
   return (
     <>

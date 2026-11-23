@@ -1,13 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import * as apiUtilisateurs from "../api/utilisateurs";
 
-// Crée la "boîte" de données. Elle est vide tant qu'aucun Fournisseur ne la remplit.
 const ContexteUtilisateur = createContext(null);
 
-// Le Fournisseur entoure l'application : tout ce qui est à l'intérieur peut lire la boîte.
-// "children" : les composants placés entre <FournisseurUtilisateur> et </FournisseurUtilisateur>.
 export function FournisseurUtilisateur({ children }) {
-  // L'utilisateur connecté (null = personne), et un indicateur "on vérifie encore".
+  // L'utilisateur connecté (null = personne)
   const [utilisateur, setUtilisateur] = useState(null);
   const [chargementUtilisateur, setChargementUtilisateur] = useState(true);
 
@@ -42,7 +39,7 @@ export function FournisseurUtilisateur({ children }) {
     setUtilisateur(nouvelUtilisateur);
   }
 
-  // "value" : tout ce que les composants pourront lire.
+
   return (
     <ContexteUtilisateur.Provider
       value={{ utilisateur, chargementUtilisateur, seConnecter, sInscrire, seDeconnecter, mettreAJourUtilisateur }}
@@ -52,9 +49,6 @@ export function FournisseurUtilisateur({ children }) {
   );
 }
 
-// Le hook que les composants appelleront pour lire la boîte.
-// Son nom doit commencer par "use" : c'est une règle de React pour les hooks (impossible de le mettre en français).
-// eslint-disable-next-line react-refresh/only-export-components
 export function useUtilisateur() {
   return useContext(ContexteUtilisateur);
 }

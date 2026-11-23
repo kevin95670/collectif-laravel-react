@@ -2,7 +2,7 @@ import { appelerApi } from "./client";
 
 // GET /api/evenements?sport=football&ville=Lyon&date=2026-12-05 -> EvenementController@index
 // "filtres" est un objet : { sport: "football", ville: "", date: "" }
-// Sans argument, filtres vaut {} et on récupère tout, comme avant (l'accueil continue de marcher).
+// Sans argument, filtres vaut {} et on récupère tout.
 export function recupererEvenements(filtres = {}) {
   // URLSearchParams fabrique la partie "?cle=valeur&cle2=valeur2" (et encode les accents/espaces)
   const parametres = new URLSearchParams();
