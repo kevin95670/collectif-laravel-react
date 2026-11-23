@@ -5,17 +5,17 @@ const TEMOIGNAGES = [
   {
     titre: "« Complet en une soirée ! »",
     texte: "Créer mon match a pris deux minutes, et les places étaient toutes prises le soir même. Le chat a évité plusieurs retards.",
-    auteur: "Prénom N., organisateur",
+    auteur: "Maxime D., organisateur",
   },
   {
     titre: "« Plus besoin de relancer tout le monde »",
     texte: "Les places sont comptées toutes seules et chacun sait où et quand. Je n'ai plus qu'à apporter le ballon.",
-    auteur: "Prénom N., organisateur",
+    auteur: "Aurélie T., organisateur",
   },
   {
     titre: "« J'ai trouvé un groupe près de chez moi »",
     texte: "Je cherchais des gens pour courir le dimanche matin. Un clic pour rejoindre, et je n'étais plus seul sur la ligne de départ.",
-    auteur: "Prénom N., participant",
+    auteur: "Samir B., participant",
   },
 ];
 
@@ -43,6 +43,9 @@ export default function SectionTemoignages() {
             <div className="numero">06</div>
             <h2 className="mt-6 text-4xl">Ce qu'en disent les joueurs</h2>
             <div className="sous-titre mt-4">- témoignages -</div>
+            <p className="mt-4 text-xs leading-6 text-gris">
+              Témoignages fictifs, écrits à titre d'illustration.
+            </p>
           </div>
 
           <div className="flex items-center gap-2 pt-4 md:gap-7 lg:pt-[60px]">
@@ -58,7 +61,7 @@ export default function SectionTemoignages() {
                 <div className="font-titre text-[26px] leading-tight text-marine">{temoignage.titre}</div>
                 <p className="mt-3 text-sm leading-7 text-gris">{temoignage.texte}</p>
                 <div className="mt-3 text-xs font-bold italic text-marine">- {temoignage.auteur} -</div>
-                <div className="mt-1.5 text-[11px] text-gris">Témoignage d'exemple, à remplacer par un vrai retour.</div>
+                <div className="mt-1.5 text-[11px] text-gris">Témoignage fictif</div>
               </div>
             </div>
 

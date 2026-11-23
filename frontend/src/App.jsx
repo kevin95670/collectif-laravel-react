@@ -16,6 +16,7 @@ import PageMotDePasseOublie from "./pages/PageMotDePasseOublie";
 import PageReinitialisation from "./pages/PageReinitialisation";
 import PageSport from "./pages/PageSport";
 import PageOrganisateur from "./pages/PageOrganisateur";
+import BandeauDemonstration from "./components/BandeauDemonstration";
 
 export default function App() {
   return (
@@ -68,6 +69,7 @@ export default function App() {
         </Routes>
       </main>
 
+      <BandeauDemonstration />
       <PiedDePage />
     </div>
   );
