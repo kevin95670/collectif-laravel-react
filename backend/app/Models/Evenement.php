@@ -31,6 +31,7 @@ class Evenement extends Model
         'titre', 'description', 'sport', 'adresse', 'ville',
         'date_debut', 'date_fin', 'nombre_places_max',
         'est_annule', 'organisateur_id',
+        'photo_chemin',
     ];
 
     // Conversion automatique des colonnes en types PHP
