@@ -10,17 +10,39 @@ import GrilleEvenements from "../components/GrilleEvenements";
 const OPTIONS_SPORTS_FILTRE = [{ valeur: "", libelle: "Tous les sports" }, ...LISTE_DES_SPORTS];
 
 export default function PageRechercheEvenements() {
-  // Le sport de départ peut venir de l'adresse : /evenements?sport=football (lien de l'accueil)
-  const [parametresUrl] = useSearchParams();
+  // Les filtres de départ viennent de l'adresse : /evenements?sport=running&ville=Lyon&date=2026-12-05
+  // setParametresUrl, lui, écrit dans l'adresse (comme setState, mais pour la partie après le "?").
+  const [parametresUrl, setParametresUrl] = useSearchParams();
 
   // Les trois filtres. "" = pas de filtre.
   const [sport, setSport] = useState(parametresUrl.get("sport") ?? "");
-  const [ville, setVille] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(parametresUrl.get("date") ?? "");
+
+  // La ville a deux valeurs : ce qui est tapé dans le champ (villeSaisie)
+  // et ce qui est envoyé à l'API (ville), qui ne change qu'une fois la saisie terminée.
+  const [villeSaisie, setVilleSaisie] = useState(parametresUrl.get("ville") ?? "");
+  const [ville, setVille] = useState(villeSaisie);
 
   const [evenements, setEvenements] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
+
+  // Attendre 0,4 s après la dernière lettre avant d'appliquer la ville.
+  // Le "return" annule le minuteur précédent : tant qu'on tape, rien ne part.
+  useEffect(() => {
+    const minuteur = setTimeout(() => setVille(villeSaisie), 400);
+    return () => clearTimeout(minuteur);
+  }, [villeSaisie]);
+
+  // Écrire les filtres dans l'adresse. "replace: true" remplace l'adresse actuelle
+  // au lieu d'en ajouter une dans l'historique (sinon "page précédente" repasserait par chaque lettre).
+  useEffect(() => {
+    const parametres = {};
+    if (sport) parametres.sport = sport;
+    if (ville) parametres.ville = ville;
+    if (date) parametres.date = date;
+    setParametresUrl(parametres, { replace: true });
+  }, [sport, ville, date]);
 
   // Dépendances [sport, ville, date] : React relance l'effet dès que l'une des trois change.
   useEffect(() => {
@@ -48,8 +70,10 @@ export default function PageRechercheEvenements() {
 
   function reinitialiserFiltres() {
     setSport("");
-    setVille("");
     setDate("");
+    // On vide les deux valeurs de la ville : pas d'attente pour une réinitialisation
+    setVilleSaisie("");
+    setVille("");
   }
 
   const aucunResultat = !chargement && !erreur && evenements.length === 0;
@@ -76,7 +100,7 @@ export default function PageRechercheEvenements() {
                 valeur={sport} auChangement={setSport} />
             </div>
             <div>
-              <ChampFormulaire id="filtre-ville" libelle="Ville" valeur={ville} auChangement={setVille} />
+              <ChampFormulaire id="filtre-ville" libelle="Ville" valeur={villeSaisie} auChangement={setVilleSaisie} />
             </div>
             <div>
               <ChampFormulaire id="filtre-date" libelle="Date" type="date" valeur={date} auChangement={setDate} />
