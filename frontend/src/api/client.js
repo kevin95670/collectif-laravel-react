@@ -1,4 +1,7 @@
-const URL_API = import.meta.env.VITE_API_URL;   // "http://localhost:8000"
+// En développement : l'adresse de l'API locale (VITE_API_URL, "http://localhost:8000").
+// En production (npm run build) : chaîne vide, le site et l'API sont sur le même domaine,
+// les appels deviennent donc de simples chemins comme "/api/evenements".
+const URL_API = import.meta.env.PROD ? "" : import.meta.env.VITE_API_URL;
 
 // Lit la valeur d'un cookie du navigateur
 function lireCookie(nom) {
