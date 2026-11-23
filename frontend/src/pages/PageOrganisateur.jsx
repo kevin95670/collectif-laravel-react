@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import GrilleEvenements from "../components/GrilleEvenements";
 import PagePasTrouvee from "./PagePasTrouvee";
 import { recupererOrganisateur } from "../api/organisateurs";
+import SectionAvisOrganisateur from "../components/SectionAvisOrganisateur";
 
 export default function PageOrganisateur() {
   const { id } = useParams();
@@ -66,6 +67,9 @@ export default function PageOrganisateur() {
             <GrilleEvenements evenements={organisateur.evenements_a_venir} />
           </div>
         )}
+
+        {/* La note moyenne et les avis : la section se charge toute seule à partir de l'identifiant */}
+        <SectionAvisOrganisateur organisateurId={id} />
       </div>
     </>
   );

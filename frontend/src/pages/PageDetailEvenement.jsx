@@ -8,6 +8,8 @@ import ChatEvenement from "../components/ChatEvenement";
 import PhotoEvenement from "../components/PhotoEvenement";
 import MiniCarte from "../components/MiniCarte";
 import BoutonFavori from "../components/BoutonFavori";
+import Etoiles from "../components/Etoiles";
+import FormulaireAvis from "../components/FormulaireAvis";
 
 export default function PageDetailEvenement() {
   // useParams lit les parties variables de l'URL : pour "/evenements/3", id vaut "3"
@@ -257,6 +259,35 @@ export default function PageDetailEvenement() {
           </div>
         </aside>
       </div>
+
+      {/* Après la fin de l'événement : le formulaire d'avis, ou l'avis déjà donné */}
+      {(evenement.peut_donner_un_avis || evenement.mon_avis) && (
+        <section className="mt-10 bg-ciel p-2.5 shadow-carte">
+          <div className="bg-white p-8 md:p-10">
+            <h2 className="text-3xl">Ton avis sur l'organisateur</h2>
+
+            {evenement.mon_avis ? (
+              <div className="mt-4">
+                <Etoiles note={evenement.mon_avis.note} className="text-2xl" />
+                {evenement.mon_avis.commentaire && (
+                  <p className="mt-2 text-sm leading-7 text-gris">{evenement.mon_avis.commentaire}</p>
+                )}
+                <p className="mt-3 text-xs text-gris">Merci d'avoir donné ton avis.</p>
+              </div>
+            ) : (
+              <>
+                <p className="mt-2 text-sm text-gris">
+                  L'événement est terminé : comment s'est passée la sortie avec {evenement.organisateur.name} ?
+                </p>
+                <FormulaireAvis
+                  evenementId={evenement.id}
+                  auSucces={(avis) => setEvenement({ ...evenement, peut_donner_un_avis: false, mon_avis: avis })}
+                />
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {peutAccederAuChat ? (
         // key : si on passe d'un événement à un autre, le chat repart de zéro

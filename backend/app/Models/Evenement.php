@@ -89,6 +89,23 @@ class Evenement extends Model
         return $this->hasMany(Message::class, 'evenement_id');
     }
 
+        // Les avis laissés sur cet événement (donc sur son organisateur)
+    public function avis(): HasMany
+    {
+        return $this->hasMany(Avis::class, 'evenement_id');
+    }
+
+    // Toutes les conditions pour donner un avis : événement terminé et maintenu, personne inscrite,
+    // qui n'est pas l'organisateur, et qui n'a pas déjà donné le sien
+    public function peut_etre_note_par(User $utilisateur): bool
+    {
+        return ! $this->est_annule
+            && $this->date_fin->isPast()
+            && $this->organisateur_id !== $utilisateur->id
+            && $this->participants()->where('users.id', $utilisateur->id)->exists()
+            && ! $this->avis()->where('auteur_id', $utilisateur->id)->exists();
+    }
+
     // Attribut calculé ("accesseur") : $evenement->photo_url donne l'adresse complète de l'image.
     // Le nom de la méthode (photoUrl) est imposé par Laravel : camelCase de l'attribut photo_url.
     protected function photoUrl(): Attribute

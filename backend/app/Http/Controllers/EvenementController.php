@@ -259,6 +259,10 @@ class EvenementController extends Controller
                 && $evenement->participants->contains('id', $utilisateur->id),
             'est_favori' => $utilisateur !== null
                 && $utilisateur->evenements_favoris()->where('evenements.id', $evenement->id)->exists(),
+            'peut_donner_un_avis' => $utilisateur !== null && $evenement->peut_etre_note_par($utilisateur),
+            'mon_avis' => $utilisateur !== null
+                ? $evenement->avis()->where('auteur_id', $utilisateur->id)->first(['id', 'note', 'commentaire'])
+                : null,
         ];
     }
 

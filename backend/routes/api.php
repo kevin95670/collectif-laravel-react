@@ -9,6 +9,7 @@ use App\Http\Controllers\OrganisateurController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\FavoriController;
+use App\Http\Controllers\AvisController;
 
 // ----- Routes publiques -----
 Route::post('/inscription', [AuthentificationController::class, 'inscrire']);
@@ -21,6 +22,7 @@ Route::get('/evenements', [EvenementController::class, 'index']);
 Route::get('/sports', [EvenementController::class, 'compter_evenements_par_sport']);
 Route::get('/organisateurs/{organisateur}', [OrganisateurController::class, 'afficher']);
 Route::get('/evenements/{evenement}', [EvenementController::class, 'afficher']);
+Route::get('/organisateurs/{organisateur}/avis', [AvisController::class, 'lister']);
 
 // ----- Routes réservées aux personnes connectées -----
 Route::middleware('auth:sanctum')->group(function () {
@@ -58,4 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mes-favoris', [FavoriController::class, 'lister']);
     Route::post('/evenements/{evenement}/favori', [FavoriController::class, 'ajouter']);
     Route::delete('/evenements/{evenement}/favori', [FavoriController::class, 'retirer']);
+
+    //Avis
+    Route::post('/evenements/{evenement}/avis', [AvisController::class, 'creer']);
 });

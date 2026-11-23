@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Avis;
 use App\Models\Evenement;
 use App\Models\Message;
 use App\Models\User;
@@ -46,7 +47,7 @@ class EvenementsDemoSeeder extends Seeder
 
         // Le seul compte avec un mot de passe connu, à indiquer dans le README :
         // il permet à un visiteur d'essayer de rejoindre un événement ou d'écrire dans le chat
-        $this->creer_utilisateur('Visiteur démo', 'demo@collectif.test', 'demo-collectif');
+        $visiteur = $this->creer_utilisateur('Visiteur démo', 'demo@collectif.test', 'demo-collectif');
 
         foreach ($this->evenements_a_creer() as $position => $donnees) {
             $debut = now()->addDays($donnees['jours'])->setTime($donnees['heure'], $donnees['minute']);
@@ -57,7 +58,7 @@ class EvenementsDemoSeeder extends Seeder
                 'sport' => $donnees['sport'],
                 'adresse' => $donnees['adresse'],
                 'ville' => $donnees['ville'],
-                // "dans X jours, à telle heure" : toujours à venir, quel que soit le jour d'exécution
+                // "dans X jours, à telle heure" : toujours à venir (ou toujours passé si X est négatif)
                 'date_debut' => $debut,
                 'date_fin' => $debut->copy()->addMinutes($donnees['duree_minutes']),
                 'nombre_places_max' => $donnees['places'],
@@ -71,6 +72,21 @@ class EvenementsDemoSeeder extends Seeder
             $inscrits = $participants->slice($position % 2)->take($donnees['inscrits'])->values();
             $evenement->participants()->attach($inscrits->pluck('id'));
 
+            // Le visiteur démo est inscrit à certains événements terminés, sans avoir encore donné d'avis
+            if (! empty($donnees['visiteur_inscrit'])) {
+                $evenement->participants()->attach($visiteur->id);
+            }
+
+            // Les avis des événements terminés : [indice de l'inscrit, note, commentaire]
+            foreach ($donnees['avis'] ?? [] as [$indice_inscrit, $note, $commentaire]) {
+                Avis::create([
+                    'evenement_id' => $evenement->id,
+                    'auteur_id' => $inscrits[$indice_inscrit]->id,
+                    'note' => $note,
+                    'commentaire' => $commentaire,
+                ]);
+            }
+
             // Quelques messages dans le chat du premier événement
             if ($position === 0) {
                 $this->ecrire_messages($evenement, $inscrits, $organisateurs[$donnees['organisateur']]);
@@ -78,7 +94,7 @@ class EvenementsDemoSeeder extends Seeder
         }
     }
 
-    // Les 9 événements : un par sport
+    // Les 9 événements à venir (un par sport), puis 4 événements terminés avec leurs avis
     private function evenements_a_creer(): array
     {
         return [
@@ -126,6 +142,48 @@ class EvenementsDemoSeeder extends Seeder
              'description' => "On apprend les règles en dix minutes, puis on joue. Aucun matériel à apporter.",
              'adresse' => 'Avenue Clot Bey', 'ville' => 'Marseille',
              'jours' => 11, 'heure' => 17, 'minute' => 0, 'duree_minutes' => 120, 'places' => 16, 'inscrits' => 3],
+
+            // ----- Événements terminés (jours négatifs) : ils servent aux avis -----
+            ['titre' => 'Match de foot du mercredi soir', 'sport' => 'football', 'organisateur' => 'camille',
+             'description' => "Un 7 contre 7 entre amateurs, ambiance détendue.",
+             'adresse' => '99 boulevard Kellermann', 'ville' => 'Paris',
+             'jours' => -6, 'heure' => 19, 'minute' => 30, 'duree_minutes' => 120, 'places' => 14, 'inscrits' => 6,
+             'avis' => [
+                 [0, 5, "Super ambiance, équipes bien équilibrées."],
+                 [1, 5, "Organisation au top, Camille avait tout prévu."],
+                 [2, 4, "Très bon match, un peu de retard au début."],
+                 [3, 5, null],
+             ]],
+
+            // Le visiteur démo est inscrit à celui-ci et n'a pas donné d'avis : il peut tester le formulaire
+            ['titre' => 'Basket du jeudi au gymnase Japy', 'sport' => 'basket', 'organisateur' => 'camille',
+             'description' => "Un 5 contre 5 sans prise de tête.",
+             'adresse' => '2 rue Japy', 'ville' => 'Paris',
+             'jours' => -4, 'heure' => 20, 'minute' => 0, 'duree_minutes' => 120, 'places' => 12, 'inscrits' => 4,
+             'visiteur_inscrit' => true,
+             'avis' => [
+                 [0, 4, "Bonne séance, merci pour l'organisation."],
+                 [1, 5, null],
+             ]],
+
+            ['titre' => "Footing d'automne autour du parc de la Tête d'Or", 'sport' => 'running', 'organisateur' => 'yanis', 'image' => 'rencontre-running',
+             'description' => "Une boucle de 10 km à allure tranquille, café à l'arrivée.",
+             'adresse' => 'Place du Général Leclerc', 'ville' => 'Lyon',
+             'jours' => -9, 'heure' => 8, 'minute' => 30, 'duree_minutes' => 90, 'places' => 20, 'inscrits' => 5,
+             'avis' => [
+                 [0, 5, "Parcours magnifique et bon rythme."],
+                 [1, 4, "Un peu rapide pour moi, mais personne n'a été laissé derrière."],
+                 [2, 5, null],
+             ]],
+
+            ['titre' => 'Sortie vélo sur les quais', 'sport' => 'velo', 'organisateur' => 'lucie',
+             'description' => "Environ 30 km sur les quais, avec une pause café.",
+             'adresse' => 'Place de la Bourse', 'ville' => 'Bordeaux',
+             'jours' => -16, 'heure' => 9, 'minute' => 0, 'duree_minutes' => 180, 'places' => 12, 'inscrits' => 4,
+             'avis' => [
+                 [0, 5, "Très bien organisé, pause café comprise !"],
+                 [1, 5, "Rien à redire."],
+             ]],
         ];
     }
 
@@ -138,7 +196,7 @@ class EvenementsDemoSeeder extends Seeder
         );
     }
 
-    // Efface les événements de démonstration d'une exécution précédente (et leurs photos)
+    // Efface les événements de démonstration d'une exécution précédente (et leurs photos, avis, messages)
     private function supprimer_anciens_evenements_de_demonstration(): void
     {
         $identifiants = User::whereIn('email', array_column(self::ORGANISATEURS, 'email'))->pluck('id');
@@ -149,6 +207,7 @@ class EvenementsDemoSeeder extends Seeder
             }
             $evenement->participants()->detach();
             $evenement->messages()->delete();
+            $evenement->avis()->delete();
             $evenement->delete();
         });
     }
