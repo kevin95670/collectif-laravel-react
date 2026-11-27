@@ -9,9 +9,10 @@ export default function SectionProchainsEvenements() {
 
   useEffect(() => {
     // Sans filtre : tous les événements à venir, du plus proche au plus lointain (le tri est fait par Laravel).
+    // L'API est paginée : les événements sont dans "data" (la première page).
     // slice(0, 4) : on ne garde que les quatre premiers.
     recupererEvenements()
-      .then((evenementsRecus) => setEvenements(evenementsRecus.slice(0, 4)))
+      .then((reponse) => setEvenements(reponse.data.slice(0, 4)))
       .catch(() => setEvenements([]));   // en cas d'erreur, la section affiche simplement le message vide
   }, []);
 

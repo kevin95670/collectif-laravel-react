@@ -13,6 +13,7 @@ export default function PageSport() {
   const libelle = LISTE_DES_SPORTS.find((element) => element.valeur === sport)?.libelle;
 
   const [evenements, setEvenements] = useState([]);
+  const [total, setTotal] = useState(0);   // nombre total d'événements du sport (la liste n'en contient qu'une page)
   const [nombresParSport, setNombresParSport] = useState({});   // { football: 3, running: 1, ... }
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
@@ -26,8 +27,11 @@ export default function PageSport() {
     setErreur("");
 
     recupererEvenements({ sport })
-      .then((evenementsRecus) => {
-        if (!ignorerCetteReponse) setEvenements(evenementsRecus);
+      .then((reponse) => {
+        if (ignorerCetteReponse) return;
+        // L'API est paginée : la liste est dans "data", le nombre total d'événements dans "total"
+        setEvenements(reponse.data);
+        setTotal(reponse.total);
       })
       .catch(() => {
         if (!ignorerCetteReponse) setErreur("Impossible de charger les événements.");
@@ -77,7 +81,7 @@ export default function PageSport() {
           <h1 className="apparition mt-4 text-5xl text-white md:text-7xl" style={{ animationDelay: "0.15s" }}>{libelle}</h1>
           {!chargement && !erreur && (
             <p className="texte-maj apparition mt-4 text-xs text-white" style={{ animationDelay: "0.3s" }}>
-              {evenements.length} {evenements.length > 1 ? "événements à venir" : "événement à venir"}
+              {total} {total > 1 ? "événements à venir" : "événement à venir"}
             </p>
           )}
         </div>
@@ -120,8 +124,12 @@ export default function PageSport() {
             <>
               <GrilleEvenements evenements={evenements} />
               <p className="mt-8 text-center text-sm text-gris">
-                Une ville ou une date en tête ?{" "}
-                <Link to={"/evenements?sport=" + sport} className="font-bold text-brand hover:underline">Affiner la recherche</Link>
+                {total > evenements.length
+                  ? "Il y a d'autres événements : "
+                  : "Une ville ou une date en tête ? "}
+                <Link to={"/evenements?sport=" + sport} className="font-bold text-brand hover:underline">
+                  {total > evenements.length ? "voir tous les événements de " + libelle.toLowerCase() : "Affiner la recherche"}
+                </Link>
               </p>
             </>
           )}
