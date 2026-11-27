@@ -49,6 +49,9 @@ class ApercuPartageController extends Controller
             $balises[] = '<meta property="og:image" content="' . e($image) . '">';
         }
 
+        // On retire les balises de partage générales de index.html : celles de l'événement les remplacent
+        $html = preg_replace('/<meta\s+(?:property|name)="(?:og|twitter):[^"]*"[^>]*>\s*/i', '', $html);
+
         // preg_replace_callback plutôt que preg_replace : un "$5" dans un titre ne doit pas être pris pour une consigne
         $html = preg_replace_callback('/<title>.*?<\/title>/s', fn () => '<title>' . e($titre) . '</title>', $html, 1);
         $html = preg_replace_callback('/<meta name="description"[^>]*>/', fn () => '<meta name="description" content="' . e($description) . '">', $html, 1);
@@ -82,7 +85,7 @@ class ApercuPartageController extends Controller
         return $description;
     }
 
-    // La photo de l'événement, sinon l'image de son sport, sinon rien
+    // La photo de l'événement, sinon l'image de son sport, sinon l'image générale du site
     private function trouver_image(Evenement $evenement): ?string
     {
         if ($evenement->photo_url !== null) {
@@ -92,8 +95,17 @@ class ApercuPartageController extends Controller
                 : config('app.frontend_url') . $evenement->photo_url;
         }
 
-        $fichier = 'images/sport-' . $evenement->sport . '.webp';
+        $candidats = [
+            'images/sport-' . $evenement->sport . '.webp',
+            'images/partage-collectif.jpg',
+        ];
 
-        return file_exists(public_path($fichier)) ? config('app.frontend_url') . '/' . $fichier : null;
+        foreach ($candidats as $fichier) {
+            if (file_exists(public_path($fichier))) {
+                return config('app.frontend_url') . '/' . $fichier;
+            }
+        }
+
+        return null;
     }
 }
